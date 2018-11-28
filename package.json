@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/tchiayan/nemoparser.git"
   },
-  "keywords": [],
+  "keywords": ["Nemo","Radio","GSM","LTE","UMTS"],
   "author": "Tan Chia Yan",
   "license": "ISC",
   "bugs": {
