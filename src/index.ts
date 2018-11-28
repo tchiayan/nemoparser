@@ -4,7 +4,7 @@ import {ParseLogfileStatus} from './model/model'
 import {NemoParameterGrid} from './shared/nemo_parameter_grid'
 
 export class NemoParser {
-    constructor(private nemoParamGrid:NemoParameterGrid){
+    constructor(){
         
     }
 
@@ -141,7 +141,7 @@ export class NemoParser {
                     extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER
                     function_call.push({
                         TRIGGER:'LTE_FDD_SCANNER_MEASUREMENT',
-                        FUNCTION:this.nemoParamGrid.nemo_scanner_measurement
+                        FUNCTION:new NemoParameterGrid().nemo_scanner_measurement
                     })
             }
         }
