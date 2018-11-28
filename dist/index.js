@@ -1,22 +1,28 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const DECODER = __importStar(require("./shared/nemo_decoder"));
-const rxjs_1 = require("rxjs");
-class NemoParser {
-    constructor(nemoParamGrid) {
+var DECODER = require("./shared/nemo_decoder");
+var rxjs_1 = require("rxjs");
+var NemoParser = /** @class */ (function () {
+    function NemoParser(nemoParamGrid) {
         this.nemoParamGrid = nemoParamGrid;
     }
-    getInfo(cols, format, extras = null, skip_null = true) {
-        let filter = [];
-        Object.keys(format.filter).forEach((c) => {
-            const _c = parseInt(c);
+    NemoParser.prototype.getInfo = function (cols, format, extras, skip_null) {
+        if (extras === void 0) { extras = null; }
+        if (skip_null === void 0) { skip_null = true; }
+        var filter = [];
+        Object.keys(format.filter).forEach(function (c) {
+            var _c = parseInt(c);
             if (!cols[_c]) {
                 filter.push(false);
             }
@@ -33,46 +39,46 @@ class NemoParser {
             }
         });
         if (!filter.includes(false)) {
-            let output = {};
+            var output_1 = {};
             Object.keys(format.output).forEach(function (f) {
                 if (f !== 'loop') {
                     if (typeof format.output[f] == 'string') {
-                        output[f] = format.output[f];
+                        output_1[f] = format.output[f];
                     }
                     else {
-                        output[f] = cols[format.output[f]];
+                        output_1[f] = cols[format.output[f]];
                     }
                 }
                 else {
-                    let n, p, s, c;
+                    var n = void 0, p_1, s_1, c_1;
                     if (typeof format.output[f]['n'] == 'object') {
                         // s = starting, p = seperationg,  n = number 
-                        let st = format.output[f]['n']['s'];
-                        let nu = parseInt(cols[format.output[f]['n']['n']]);
-                        let sp = parseInt(cols[format.output[f]['n']['p']]);
-                        s = st + nu * sp + 2;
+                        var st = format.output[f]['n']['s'];
+                        var nu = parseInt(cols[format.output[f]['n']['n']]);
+                        var sp = parseInt(cols[format.output[f]['n']['p']]);
+                        s_1 = st + nu * sp + 2;
                         n = parseInt(cols[st + nu * sp]);
                         //console.log(st,nu,sp)
                     }
                     else {
                         n = parseInt(cols[format.output[f]['n']]);
-                        s = format.output[f]['s'];
+                        s_1 = format.output[f]['s'];
                     }
-                    p = format.output[f]['p'];
-                    c = format.output[f]['c'];
-                    output['loop'] = [];
+                    p_1 = format.output[f]['p'];
+                    c_1 = format.output[f]['c'];
+                    output_1['loop'] = [];
                     for (var i = 0; i < n; i++) {
                         var subfield = {};
-                        Object.keys(c).forEach(function (field) {
-                            var cf = c[field];
-                            subfield[field] = cols[s + i * p + cf];
+                        Object.keys(c_1).forEach(function (field) {
+                            var cf = c_1[field];
+                            subfield[field] = cols[s_1 + i * p_1 + cf];
                             //subfield['rsrp'] = ""
                         });
                         if (extras) {
                             Object.assign(subfield, extras);
                             //if(subfield['EARFCN'] != output['EARFCN']) continue;
                         }
-                        if (output['TIME'] == "06:27:40.650")
+                        if (output_1['TIME'] == "06:27:40.650")
                             console.log(subfield);
                         //check if any value is empty then skip for adding
                         if (skip_null) {
@@ -81,33 +87,34 @@ class NemoParser {
                                 continue;
                             }
                         }
-                        output['loop'].push(subfield);
+                        output_1['loop'].push(subfield);
                     }
                 }
             });
-            return output;
+            return output_1;
         }
         else {
             return false;
         }
-    }
-    parseLogfile(files, extraction) {
-        let output = {};
-        let filecount = files.length;
-        return rxjs_1.Observable.create((observer) => {
-            for (let i = 0, f; f = files[i]; i++) {
-                let reader = new FileReader();
-                reader.onload = (log) => {
-                    let lines = reader.result.split("\n");
-                    let GPS_RESULT = { LAT: 0, LON: 0 };
-                    for (let j = 0, r; r = lines[j]; j++) {
-                        let columns = r.split(",");
+    };
+    NemoParser.prototype.parseLogfile = function (files, extraction) {
+        var _this = this;
+        var output = {};
+        var filecount = files.length;
+        return rxjs_1.Observable.create(function (observer) {
+            var _loop_1 = function (i, f) {
+                var reader = new FileReader();
+                reader.onload = function (log) {
+                    var lines = reader.result.split("\n");
+                    var GPS_RESULT = { LAT: 0, LON: 0 };
+                    for (var j = 0, r = void 0; r = lines[j]; j++) {
+                        var columns = r.split(",");
                         //console.log(columns)
                         if (columns[0] == 'GPS') {
                             GPS_RESULT = { LAT: parseFloat(columns[4]), LON: parseFloat(columns[3]) };
                         }
                         else if (columns[0] in extraction) {
-                            let result = this.getInfo(columns, extraction[columns[0]], null, false);
+                            var result = _this.getInfo(columns, extraction[columns[0]], null, false);
                             if (result) {
                                 if (columns[0] in output) {
                                     /*if('TIME' in result){
@@ -115,16 +122,16 @@ class NemoParser {
                                             continue
                                         }
                                     }*/
-                                    output[columns[0]].push(Object.assign({}, result, { 'file': f.name }, GPS_RESULT));
+                                    output[columns[0]].push(__assign({}, result, { 'file': f.name }, GPS_RESULT));
                                 }
                                 else {
-                                    output[columns[0]] = [Object.assign({}, result, { 'file': f.name }, GPS_RESULT)];
+                                    output[columns[0]] = [__assign({}, result, { 'file': f.name }, GPS_RESULT)];
                                 }
                             }
                         }
                     }
                     if (!--filecount) {
-                        for (let type in extraction) {
+                        for (var type in extraction) {
                             if (!(type in output)) {
                                 output[type] = [];
                             }
@@ -140,13 +147,17 @@ class NemoParser {
                 };
                 reader.readAsText(f);
                 //reader.readAsArrayBuffer(f)
+            };
+            for (var i = 0, f = void 0; f = files[i]; i++) {
+                _loop_1(i, f);
             }
         });
-    }
-    displayGrid(nemo_params, files) {
-        let extraction = {};
-        let function_call = [];
-        for (let param of nemo_params) {
+    };
+    NemoParser.prototype.displayGrid = function (nemo_params, files) {
+        var extraction = {};
+        var function_call = [];
+        for (var _i = 0, nemo_params_1 = nemo_params; _i < nemo_params_1.length; _i++) {
+            var param = nemo_params_1[_i];
             switch (param) {
                 case 'LTE_FDD_SCANNER_MEASUREMENT':
                     extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER;
@@ -156,10 +167,11 @@ class NemoParser {
                     });
             }
         }
-        this.parseLogfile(files, extraction).subscribe((data) => {
+        this.parseLogfile(files, extraction).subscribe(function (data) {
             if (data.status == 'OK') {
-                let result = {};
-                for (let _f of function_call) {
+                var result = {};
+                for (var _i = 0, function_call_1 = function_call; _i < function_call_1.length; _i++) {
+                    var _f = function_call_1[_i];
                     result[_f.TRIGGER] = _f.FUNCTION();
                 }
                 return result;
@@ -170,6 +182,7 @@ class NemoParser {
                 return "ERROR!";
             }
         });
-    }
-}
+    };
+    return NemoParser;
+}());
 exports.NemoParser = NemoParser;
