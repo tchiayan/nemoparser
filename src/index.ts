@@ -1,10 +1,11 @@
 import * as DECODER from './shared/nemo_decoder'
-import {Subject, Observable,Observer} from 'rxjs'
+import {Observable,Observer} from 'rxjs'
 import {ParseLogfileStatus} from './model/model'
+import {NemoParameterGrid} from './shared/nemo_parameter_grid'
 
 export class NemoParser {
-    constructor(){
-
+    constructor(private nemoParamGrid:NemoParameterGrid){
+        
     }
 
     private getInfo(cols: string[], format: any, extras: any = null, skip_null: boolean = true): any {
@@ -80,7 +81,7 @@ export class NemoParser {
         }
     } 
 
-    public parseLogfile(files:FileList,extraction:any):Observable<ParseLogfileStatus>{
+    private parseLogfile(files:FileList,extraction:any):Observable<ParseLogfileStatus>{
         let output = {}
         let filecount = files.length
         return Observable.create((observer:Observer<ParseLogfileStatus>)=>{
@@ -131,5 +132,32 @@ export class NemoParser {
         
     }
 
-    
+    public displayGrid(nemo_params:string[],files:FileList):any{
+        let extraction = {}
+        let function_call:any[] = []
+        for(let param of nemo_params){
+            switch(param){
+                case 'LTE_FDD_SCANNER_MEASUREMENT':
+                    extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER
+                    function_call.push({
+                        TRIGGER:'LTE_FDD_SCANNER_MEASUREMENT',
+                        FUNCTION:this.nemoParamGrid.nemo_scanner_measurement
+                    })
+            }
+        }
+
+        this.parseLogfile(files,extraction).subscribe((data:ParseLogfileStatus)=>{
+            if(data.status == 'OK'){
+                let result = {}
+                for(let _f of function_call){
+                    result[_f.TRIGGER] = _f.FUNCTION()
+                }
+                return result
+            }else if(data.status == 'PROGRESS'){
+
+            }else{
+                return "ERROR!"
+            }
+        })
+    }
 }

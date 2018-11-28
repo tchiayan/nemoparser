@@ -10,10 +10,19 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+var DECODER = __importStar(require("./shared/nemo_decoder"));
 var rxjs_1 = require("rxjs");
 var NemoParser = /** @class */ (function () {
-    function NemoParser() {
+    function NemoParser(nemoParamGrid) {
+        this.nemoParamGrid = nemoParamGrid;
     }
     NemoParser.prototype.getInfo = function (cols, format, extras, skip_null) {
         if (extras === void 0) { extras = null; }
@@ -148,6 +157,36 @@ var NemoParser = /** @class */ (function () {
             };
             for (var i = 0, f = void 0; f = files[i]; i++) {
                 _loop_1(i, f);
+            }
+        });
+    };
+    NemoParser.prototype.displayGrid = function (nemo_params, files) {
+        var extraction = {};
+        var function_call = [];
+        for (var _i = 0, nemo_params_1 = nemo_params; _i < nemo_params_1.length; _i++) {
+            var param = nemo_params_1[_i];
+            switch (param) {
+                case 'LTE_FDD_SCANNER_MEASUREMENT':
+                    extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER;
+                    function_call.push({
+                        TRIGGER: 'LTE_FDD_SCANNER_MEASUREMENT',
+                        FUNCTION: this.nemoParamGrid.nemo_scanner_measurement
+                    });
+            }
+        }
+        this.parseLogfile(files, extraction).subscribe(function (data) {
+            if (data.status == 'OK') {
+                var result = {};
+                for (var _i = 0, function_call_1 = function_call; _i < function_call_1.length; _i++) {
+                    var _f = function_call_1[_i];
+                    result[_f.TRIGGER] = _f.FUNCTION();
+                }
+                return result;
+            }
+            else if (data.status == 'PROGRESS') {
+            }
+            else {
+                return "ERROR!";
             }
         });
     };
