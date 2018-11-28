@@ -1,0 +1,27 @@
+{
+  "name": "nemoparser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tchiayan/nemoparser.git"
+  },
+  "keywords": [],
+  "author": "Tan Chia Yan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tchiayan/nemoparser/issues"
+  },
+  "homepage": "https://github.com/tchiayan/nemoparser#readme",
+  "dependencies": {
+    "rxjs": "^6.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^3.1.6"
+  }
+}
