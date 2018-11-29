@@ -173,7 +173,7 @@ var NemoParser = /** @class */ (function () {
                 var result = {};
                 for (var _i = 0, function_call_1 = function_call; _i < function_call_1.length; _i++) {
                     var _f = function_call_1[_i];
-                    result[_f.TRIGGER] = _f.FUNCTION();
+                    result[_f.TRIGGER] = _f.FUNCTION(data.result);
                 }
                 return result;
             }
