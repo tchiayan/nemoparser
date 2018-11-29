@@ -8,7 +8,9 @@
   "scripts": {
     "test": "mocha -r ts-node/register src/index.spec.ts",
     "test-server": "node server-test/server.js",
-    "build": "tsc"
+    "build": "tsc",
+    "git-update": "git add -A && git commit -m \"Version Update\" && git push origin master",
+    "npm-update": "npm version patch && npm publish"
   },
   "repository": {
     "type": "git",

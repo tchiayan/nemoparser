@@ -5,5 +5,5 @@ export declare class NemoParameterGrid {
         'SCANNER_CINR': any[];
         'SCANNER_RSRQ': any[];
     };
-    private nemo_scanner_field_n_best;
+    nemo_scanner_field_n_best(data: any, field: string): any[];
 }

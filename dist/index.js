@@ -164,7 +164,7 @@ var NemoParser = /** @class */ (function () {
                     extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER;
                     function_call.push({
                         TRIGGER: 'LTE_FDD_SCANNER_MEASUREMENT',
-                        FUNCTION: this.nemoParamGrid.nemo_scanner_measurement
+                        FUNCTION: new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement
                     });
             }
         }

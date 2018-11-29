@@ -1,7 +1,7 @@
 export class NemoParameterGrid {
     constructor(){}
 
-    public nemo_scanner_measurement(data){
+    nemo_scanner_measurement(data){
         console.time("nemo_scanner_measurement")
         //let OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
         if (!data.OFDMSCAN) throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
@@ -23,7 +23,7 @@ export class NemoParameterGrid {
         return {'SCANNER_RSRP':RSRP,'SCANNER_CINR':CINR,'SCANNER_RSRQ':RSRQ}
     }
 
-    private nemo_scanner_field_n_best(data,field:string):any[]{
+    nemo_scanner_field_n_best(data,field:string):any[]{
         let rfield = data.map((entry,index,array)=>{
             //let empty_field = {}
             //empty_field[field] = ''
