@@ -147,12 +147,12 @@ export class NemoParser {
                     })
             }
         }
-
+        
         this.parseLogfile(files,extraction).subscribe((data:ParseLogfileStatus)=>{
             if(data.status == 'OK'){
                 let result = {}
                 for(let _f of function_call){
-                    result[_f.TRIGGER] = _f.FUNCTION()
+                    result[_f.TRIGGER] = _f.FUNCTION(data.result)
                 }
                 return result
             }else if(data.status == 'PROGRESS'){
