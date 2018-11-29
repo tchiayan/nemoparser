@@ -23,7 +23,7 @@ export class NemoParameterGrid {
         return {'SCANNER_RSRP':RSRP,'SCANNER_CINR':CINR,'SCANNER_RSRQ':RSRQ}
     }
 
-    private nemo_scanner_field_n_best(data,field:string){
+    private nemo_scanner_field_n_best(data,field:string):any[]{
         let rfield = data.map((entry,index,array)=>{
             //let empty_field = {}
             //empty_field[field] = ''
