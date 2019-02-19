@@ -6,8 +6,8 @@ import { expect } from 'chai'
 import { Parser as Json2csvParser } from 'json2csv'
 
 describe('FILE PARSING TEST',() => {
-    it('LOAD TDD SCANNER FILE',()=>{
-        const directory = './server-test/bulk_loading';
+    it('LOAD TDD SCANNER FILE | LTE_FDD_SCANNER_MEASUREMENT',()=>{
+        const directory = './server-test/logfiles/TDD_SCANNER_LOGFILE';
         let bufferArray:LogfileBuffer[] = []
 
         readdirSync(directory).forEach(file =>{
@@ -23,24 +23,262 @@ describe('FILE PARSING TEST',() => {
                     expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
                     expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
                     expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
-                    
-                    //checking CH
-                    //let RSRP_CH = result[i]['SCANNER_RSRP'].map(entry => entry.CH)
-                    //expect(RSRP_CH).to.not.includes.arguments.undefined
-                    //let CINR_CH = result[i]['SCANNER_CINR'].map(entry => entry.CH)
-                    //expect(CINR_CH).to.not.includes.arguments.undefined
-                    //let RSRQ_CH = result[i]['SCANNER_RSRQ'].map(entry => entry.CH)
-                    //expect(RSRQ_CH).to.not.includes.arguments.undefined
                 }
             })
     })
+
+    it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+                //console.log(result)
+                for(let i of Object.keys(result)){
+                    //expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
+                    //expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
+                    //expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
+                    expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                    expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+                    expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
+                    //console.log(result[i]['DL_TP'][0])
+                    //console.log(result[i]['DL_TP_SNR'][0])
+                }
+            })
+    })
+
+    it('LOAD TDD PSDL FILE | ATTACH_ATTEMPT',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['ATTACH_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((result)=>{
+                //console.log(result)
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['ATTACH_ATTEMPT'])
+                    expect(result[i]['ATTACH_ATTEMPT']).to.be.an('number').greaterThan(0)
+                }
+            })
+    })
+
+    it('LOAD TDD PSDL FILE | FTP_CONNECTION_ATTEMPT',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['FTP_CONNECTION_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((result)=>{
+                //console.log(result)
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['FTP_CONNECT_ATTEMPT'])
+                    expect(result[i]['FTP_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
+                }
+            })
+    })
+
+    it('LOAD TDD PSDL FILE | INTRA_HANDOVER',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['INTRA_HANDOVER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            //console.log(result)
+            for(let i of Object.keys(result)){
+                expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
+                expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+            }
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | IRAT_HANDOVER',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['IRAT_HANDOVER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            for(let i of Object.keys(result)){
+                expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                //expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
+                //expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+            }
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | PDP_CONTEXT_SETUP',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['PDP_CONTEXT_SETUP'],{fileBuffer:bufferArray}).subscribe((result)=>{
+                //console.log(result)
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['PACKET_DATA_SETUP_ATTEMPT','PACKET_DATA_SETUP_SUCCESS','PACKET_DATA_DROP'])
+                    expect(result[i]['PACKET_DATA_DROP']).to.be.an('number')
+                    expect(result[i]['PACKET_DATA_SETUP_ATTEMPT']).to.be.an('number').greaterThan(0)
+                    expect(result[i]['PACKET_DATA_SETUP_SUCCESS']).to.be.an('number').greaterThan(0)
+                }
+            })
+    })
+
+
+    it('LOAD TDD PSDL FILE | DATA_CONNECTION_SETUP',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['DATA_CONNECTION_SETUP'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['DATA_CONNECTION_SETUP']
+            expect(data).to.have.keys(['DATA_CONNECT_ATTEMPT','DATA_CONNECT_SUCCESS','DATA_SETUP_TIME'])
+            expect(data['DATA_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
+            expect(data['DATA_CONNECT_SUCCESS']).to.be.an('number').greaterThan(0)
+            expect(data['DATA_SETUP_TIME']).to.be.an('array').have.lengthOf.greaterThan(0)
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | TRACKING_AREA_UPDATE',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['TRACKING_AREA_UPDATE'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['TRACKING_AREA_UPDATE']
+            expect(data).to.have.keys(['TRACKING_AREA_UPDATE_ATTEMPT','TRACKING_AREA_UPDATE_SUCCESS'])
+            expect(data['TRACKING_AREA_UPDATE_SUCCESS']).to.be.an('number').greaterThan(0)
+            expect(data['TRACKING_AREA_UPDATE_ATTEMPT']).to.be.an('number').greaterThan(0)
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | PDSCH_BLER',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['PDSCH_BLER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['PDSCH_BLER']
+            expect(data).to.have.keys(['PDSCH_BLER'])
+            expect(data['PDSCH_BLER']).to.be.an('array').have.lengthOf.greaterThan(0)
+        })
+    })
+
+    it('LOAD TDD PSUL FILE | APPLICATION_THROUGHPUT_UPLINK',()=>{
+        const directory = './server-test/logfiles/TDD_PSUL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['APPLICATION_THROUGHPUT_UPLINK'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['APPLICATION_THROUGHPUT_UPLINK']
+            expect(data).to.have.keys(['UL_TP'])
+            expect(data['UL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+        })
+    })
+
+    it('LOAD TDD VOLTE FILE | VOLTE_CALL',()=>{
+        const directory = './server-test/logfiles/TDD_VOLTE';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['VOLTE_CALL'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['VOLTE_CALL']
+            expect(data).to.have.keys(['VOLTE_CALL_ATTEMPT','VOLTE_CALL_CONNECTED','VOLTE_CALL_DROP'])
+            expect(data['VOLTE_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
+            expect(data['VOLTE_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
+            expect(data['VOLTE_CALL_DROP']).to.be.an('array')
+        })
+    })
+
+    it('LOAD TDD_CSFB FILE | CSFB_CALL',()=>{
+        const directory = './server-test/logfiles/TDD_CSFB';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['CSFB_CALL'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            let data = result['CSFB_CALL']
+            expect(data).to.have.keys(['CSFB_CALL_ATTEMPT','CSFB_CALL_CONNECTED','CSFB_CALL_DROP'])
+            expect(data['CSFB_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
+            expect(data['CSFB_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
+            expect(data['CSFB_CALL_DROP']).to.be.an('array')
+        })
+    })
+
 })
 
-describe('FUNCTIONALITY TEST',()=>{
+describe('FUNCTIONALITY/KPI TEST',()=>{
     
     it('LTE_FDD_SCANNER_MEASUREMENT TEST',()=>{
         //const jsdom = new JSDOM("<!doctype html><html><body><input type='file' id='fileinput' /></body></html>")
-        const filePath = './server-test/logfiles/scanner.nmf'
+        const filePath = './server-test/logfiles/FDD_SCANNER.1.nmf'
         const fileBuffer = readFileSync(filePath,{encoding:'utf-8'})
         const fileName = basename(filePath)
         const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,fileName)
@@ -68,7 +306,7 @@ describe('FUNCTIONALITY TEST',()=>{
 
     it('LTE_TDD_SCANNER_MEASUREMENT TEST',()=>{
         //const jsdom = new JSDOM("<!doctype html><html><body><input type='file' id='fileinput' /></body></html>")
-        const filePath = './server-test/logfiles/SCANNER_THAI_FDD.5.nmf'
+        const filePath = './server-test/logfiles/TDD_SCANNER.1.nmf'
         const fileBuffer = readFileSync(filePath,{encoding:'utf-8'})
         const fileName = basename(filePath)
         const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,fileName)
@@ -77,20 +315,20 @@ describe('FUNCTIONALITY TEST',()=>{
         testClass.displayGrid(['LTE_TDD_SCANNER_MEASUREMENT'],{fileBuffer:[logfileBuffer]}).subscribe((result)=>{
             for(let i of Object.keys(result)){
                 //console.log(result[i]['SCANNER_RSRP'][0])
-                const json2csvParser  = new Json2csvParser()
-                const csv = json2csvParser.parse(result[i]['SCANNER_RSRP'])
-                writeFileSync('./server-test/logfiles/TDD_DEBUG.csv',csv)
+                //const json2csvParser  = new Json2csvParser()
+                //const csv = json2csvParser.parse(result[i]['SCANNER_RSRP'])
+                //writeFileSync('./server-test/logfiles/TDD_DEBUG.csv',csv)
                 //console.log(csv)
-                //expect(result[i]['SCANNER_RSRP']).to.be.an('array').have.lengthOf(6875)
-                let RSRP_AVG = result[i]['SCANNER_RSRP'].reduce((total,current) => {return total + current.RSRP},0) / result[i]['SCANNER_RSRP'].length
+                expect(result[i]['SCANNER_RSRP']).to.be.an('array').have.lengthOf.at.least(1)
+                //let RSRP_AVG = result[i]['SCANNER_RSRP'].reduce((total,current) => {return total + current.RSRP},0) / result[i]['SCANNER_RSRP'].length
                 //expect(parseFloat(RSRP_AVG.toFixed(5))).to.eql(-63.16795)
                 
-                //expect(result[i]['SCANNER_CINR']).to.be.an('array').have.lengthOf(6875)
-                let CINR_AVG = result[i]['SCANNER_CINR'].reduce((total,current) => {return total + current.CINR},0) / result[i]['SCANNER_CINR'].length
+                expect(result[i]['SCANNER_CINR']).to.be.an('array').have.lengthOf.at.least(1)
+                //let CINR_AVG = result[i]['SCANNER_CINR'].reduce((total,current) => {return total + current.CINR},0) / result[i]['SCANNER_CINR'].length
                 //expect(parseFloat(CINR_AVG.toFixed(5))).to.eql(15.39957)
                 
-                //expect(result[i]['SCANNER_RSRQ']).to.be.an('array').have.lengthOf(6875)
-                let RSRQ_AVG = result[i]['SCANNER_RSRQ'].reduce((total,current) => {return total + current.RSRQ},0) / result[i]['SCANNER_RSRQ'].length
+                expect(result[i]['SCANNER_RSRQ']).to.be.an('array').have.lengthOf.at.least(1)
+                //let RSRQ_AVG = result[i]['SCANNER_RSRQ'].reduce((total,current) => {return total + current.RSRQ},0) / result[i]['SCANNER_RSRQ'].length
                 //expect(parseFloat(RSRQ_AVG.toFixed(5))).to.eql(-9.03419)
             }
             
@@ -107,8 +345,8 @@ describe('FUNCTIONALITY TEST',()=>{
         const testClass = new NemoParser();
         testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:[logfileBuffer]}).subscribe((result)=>{
             for(let i of Object.keys(result)){
-                expect(result[i]['DRATE']).to.be.an('array').have.lengthOf(122)
-                expect(result[i]['DL_SNR']).to.be.an('array')
+                expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf(122)
+                expect(result[i]['DL_TP_SNR']).to.be.an('array')
             }
             
         })

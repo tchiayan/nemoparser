@@ -97,7 +97,6 @@ export class NemoParser {
         }
     } 
 
-    
     private parseLogfile(files:FileList,extraction:any):Observable<ParseLogfileStatus>{
         let output = {}
         let filecount = files.length
@@ -203,27 +202,79 @@ export class NemoParser {
             switch(param){
                 case 'LTE_FDD_SCANNER_MEASUREMENT':
                     if(!('OFDMSCAN' in extraction)) extraction['OFDMSCAN'] = DECODER.LTE_FDD_SCANNER
-                    function_call.push({
-                        TRIGGER:'LTE_FDD_SCANNER_MEASUREMENT'
-                    })
                     break;
 
-                    case 'LTE_TDD_SCANNER_MEASUREMENT':
+                case 'LTE_TDD_SCANNER_MEASUREMENT':
                     if(!('OFDMSCAN' in extraction)) extraction['OFDMSCAN'] = DECODER.LTE_TDD_SCANNER
-                    function_call.push({
-                        TRIGGER:'LTE_TDD_SCANNER_MEASUREMENT'
-                    })
                     break;
 
                 case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
                     if(!('DRATE' in extraction)) extraction['DRATE'] = DECODER.DRATE_DL
-                    if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_FDD_CI
-                    if(!('DREQ' in extraction)) extraction['DREQ'] = DECODER.UE_DATA_TRANSFER
+                    if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_CI
+                    if(!('DREQ' in extraction)) extraction['DREQ'] = DECODER.UE_DATA_TRANSFER_ATTEMPT
                     if(!('DCOMP' in extraction)) extraction['DCOMP'] = DECODER.UE_DATA_TRANSFER_COMPLETE
-                    function_call.push({
-                        TRIGGER:'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'
-                    })
                     break;
+
+                case 'APPLICATION_THROUGHPUT_UPLINK':
+                    if(!('DRATE' in extraction)) extraction['DRATE'] = DECODER.DRATE_UL
+                    if(!('DREQ' in extraction)) extraction['DREQ'] = DECODER.UE_DATA_TRANSFER_ATTEMPT
+                    break;
+
+                case 'ATTACH_ATTEMPT':
+                    if(!('GAA' in extraction)) extraction['GAA'] = DECODER.UE_GAA_ATTACH_ATTEMPT
+                    break;
+
+                case 'FTP_CONNECTION_ATTEMPT':
+                    if(!('DAA' in extraction)) extraction['DAA'] = DECODER.UE_DAA
+                    break;
+
+                case 'INTRA_HANDOVER':
+                    if(!('HOA' in extraction)) extraction['HOA'] = DECODER.UE_HOA
+                    if(!('HOS' in extraction)) extraction['HOS'] = DECODER.UE_HOS
+                    break;
+
+                case 'IRAT_HANDOVER':
+                    if(!('HOA' in extraction)) extraction['HOA'] = DECODER.UE_HOA
+                    if(!('HOS' in extraction)) extraction['HOS'] = DECODER.UE_HOS
+                    break;
+
+                case 'VOLTE_CALL':
+                    if(!('CAA' in extraction)) extraction['CAA'] = DECODER.UE_CAA
+                    if(!('CAC' in extraction)) extraction['CAC'] = DECODER.UE_CAC
+                    if(!('CAF' in extraction)) extraction['CAF'] = DECODER.UE_CAF
+                    if(!('CAD' in extraction)) extraction['CAD'] = DECODER.UE_CAD
+                    break;
+
+                case 'CSFB_CALL':
+                    if(!('CAA' in extraction)) extraction['CAA'] = DECODER.UE_CAA
+                    if(!('CAC' in extraction)) extraction['CAC'] = DECODER.UE_CAC
+                    if(!('CAF' in extraction)) extraction['CAF'] = DECODER.UE_CAF
+                    if(!('CAD' in extraction)) extraction['CAD'] = DECODER.UE_CAD
+                    break;
+                
+                case 'PDP_CONTEXT_SETUP':
+                    if(!('PAA' in extraction)) extraction['PAA'] = DECODER.UE_PAA
+                    if(!('PAC' in extraction)) extraction['PAC'] = DECODER.UE_PAC
+                    if(!('PAD' in extraction)) extraction['PAD'] = DECODER.UE_PAD 
+                    break;
+
+                case 'DATA_CONNECTION_SETUP':
+                    if(!('DAA' in extraction)) extraction['DAA'] = DECODER.UE_DAA
+                    if(!('DAC' in extraction)) extraction['DAC'] = DECODER.UE_DAC
+                    break;
+
+                case 'TRACKING_AREA_UPDATE':
+                    if(!('TUA' in extraction)) extraction['TUA'] = DECODER.UE_TUA
+                    if(!('TUS' in extraction)) extraction['TUS'] = DECODER.UE_TUS
+                    break;
+                
+                case 'PDSCH_BLER':
+                    if(!('PHRATE' in extraction)) extraction['PHRATE'] = DECODER.UE_BLER
+                    break;
+
+                case 'AUDIO_QUALITY_MOS':
+                    if(!('AQDL' in extraction)) extraction['AQDL'] = DECODER.UE_AUDIO_MOS
+
             }
         }
         
@@ -231,16 +282,49 @@ export class NemoParser {
             let subFunction = (data:ParseLogfileStatus) => {
                 if(data.status == 'OK'){
                     let result = {}
-                    for(let _f of function_call){
-                        switch(_f.TRIGGER){
+                    for(let param of nemo_params){
+                        switch(param){
                             case 'LTE_FDD_SCANNER_MEASUREMENT':
-                                result[_f.TRIGGER] = new NemoParameterGrid().nemo_scanner_measurement(data.result)
+                                result[param] = new NemoParameterGrid().nemo_scanner_measurement(data.result)
                                 break;
                             case 'LTE_TDD_SCANNER_MEASUREMENT':
-                                result[_f.TRIGGER] = new NemoParameterGrid().nemo_scanner_measurement(data.result)
+                                result[param] = new NemoParameterGrid().nemo_scanner_measurement(data.result)
                                 break;
                             case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
-                                result[_f.TRIGGER] = new NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result,28)
+                                result[param] = new NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result,0)
+                                break;
+                            case 'APPLICATION_THROUGHPUT_UPLINK':
+                                result[param] = new NemoParameterGrid().nemo_application_throughput_uplink(data.result)
+                                break;
+                            case 'ATTACH_ATTEMPT':
+                                result[param] = new NemoParameterGrid().nemo_attach_attempt(data.result)
+                                break;
+                            case 'FTP_CONNECTION_ATTEMPT':
+                                result[param] = new NemoParameterGrid().nemo_ftp_server_connection_attempt(data.result);
+                                break;
+                            case 'INTRA_HANDOVER':
+                                result[param] = new NemoParameterGrid().nemo_intra_handover(data.result)
+                                break;
+                            case 'IRAT_HANDOVER':
+                                result[param] = new NemoParameterGrid().nemo_irat_handover(data.result)
+                                break;
+                            case 'VOLTE_CALL':
+                                result[param] = new NemoParameterGrid().nemo_volte_call(data.result)
+                                break;
+                            case 'CSFB_CALL':
+                                result[param] = new NemoParameterGrid().nemo_csfb_call(data.result)
+                                break;
+                            case 'PDP_CONTEXT_SETUP':
+                                result[param] = new NemoParameterGrid().nemo_packet_data_setup(data.result)
+                                break;
+                            case 'DATA_CONNECTION_SETUP':
+                                result[param] = new NemoParameterGrid().nemo_data_server_setup(data.result)
+                                break;
+                            case 'TRACKING_AREA_UPDATE':
+                                result[param] = new NemoParameterGrid().nemo_tracking_area_update(data.result)
+                                break;
+                            case 'PDSCH_BLER':
+                                result[param] = new NemoParameterGrid().nemo_pdsch_bler(data.result)
                                 break;
                         }
                     }

@@ -116,6 +116,7 @@ export class NemoParameterGrid {
         if (!data.DRATE) throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CI) throw console.error('CI is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.DREQ) throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.')
+        if (!data.DCOMP) throw console.error('DCOMP is not decoded while parsing logfile. Consider update decoder field.')
 
         data.DRATE = data.DRATE.map(entry => { return { ...entry, ETIME: this.GetEpochTime(entry.TIME) } })
         let file_list = Array.from(new Set(data.DRATE.map(entry => entry.file)))
@@ -261,8 +262,317 @@ export class NemoParameterGrid {
         //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
 
         //console.timeEnd('nemo_application_throughput_downlink_filter_sinr')
-        return { DRATE:DL, DL_SNR:DL_SNR }
+        return { DL_TP:DL, DL_TP_SNR:DL_SNR }
     }
 
+    nemo_application_throughput_uplink(data, filter?: any) {
+        //shift time location
+        //console.time("shiftLoc")
+        if (!data.DRATE) throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DREQ) throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.');
+
+        data.DRATE = data.DRATE.map(entry => { return { ...entry, ETIME: this.GetEpochTime(entry.TIME) } })
+
+        let file_list = Array.from(new Set(data.DRATE.map(entry => entry.file)))
+        let temp_DRATE:any[] = []
+        for(let file of file_list){
+            let temp_drate = data.DRATE.filter(entry => entry.file == file).sort((a,b)=>a.ETIME - b.ETIME)
+            for (let i = temp_drate.length - 1; i >= 0; i--) {
+                if (!(i == 0)) {
+                    temp_drate[i].LAT = temp_drate[i - 1].LAT
+                    temp_drate[i].LON = temp_drate[i - 1].LON
+                    temp_drate[i].TIME = temp_drate[i - 1].TIME
+                    temp_drate[i]['duplicate'] = temp_drate[i].ETIME == temp_drate[i - 1].ETIME
+                    temp_drate[i].ETIME = this.GetEpochTime(temp_drate[i].TIME)
+                } else {
+                    
+                    let DREQ = data.DREQ.find(entry => entry.file == temp_drate[i].file)
+                    temp_drate[i].LAT = DREQ.LAT
+                    temp_drate[i].LON = DREQ.LON
+                    temp_drate[i].TIME = DREQ.TIME
+                    temp_drate[i].ETIME = this.GetEpochTime(temp_drate[i].TIME)
+                    temp_drate[i]['duplicate'] = false
+                    //console.table(temp_drate[i])
+                }
+            }
+            temp_DRATE = [...temp_DRATE, ...temp_drate]
+        }       
+        data.DRATE = temp_DRATE
+        data.DRATE.sort((a, b) => a.ETIME - b.ETIME)
+        data.DRATE = data.DRATE.filter(entry => !entry.duplicate)
+        //console.timeEnd("shiftLoc")
+
+        //console.time("nemo_application_throughput_uplink")
+        //let UL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
+        let UL = data.DRATE
+        UL = UL.map(x => parseInt(x.UL))
+
+        //padl max
+        //let psdlmax = (Math.max(...DL) / 1000000).toFixed(2) + "Mbps"
+        //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
+        //console.timeEnd("nemo_application_throughput_uplink")
+
+        return {UL_TP:  UL}
+    }
+
+    nemo_attach_attempt(data, filter?: any) {
+        
+        if (!data.GAA) throw console.error('GAA is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let GAA = filter.area ? data.GAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.GAA
+        let GAA = data.GAA
+        return { ATTACH_ATTEMPT : GAA.length }
+    }
+
+    nemo_ftp_server_connection_attempt(data, filter?:any){
+
+        if (!data.DAA) throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]),filter.area, {ignoreBoundary:false})) : data.DAA
+        let DAA = data.DAA
+        return { FTP_CONNECT_ATTEMPT: DAA.length }
     
+    }
+
+    nemo_intra_handover(data, filter?: any): any {
+        //console.time("nemo_intra_handover")
+        if (!data.HOA) throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.HOS) throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
+
+        let intra_handover_attempt = data.HOA.filter(entry => ['901', '902', '903'].includes(entry.HO_TYPE))
+
+        //filter HOA within the polygon if any
+        //if (filter.area) {
+        //    intra_handover_attempt = intra_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        let intra_handover_success = data.HOS.filter((entry) => {
+            return intra_handover_attempt.find((hoa_entry) => {
+                return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim()
+            })
+        })
+        
+        //if (filter.area) {
+        //    intra_handover_success = intra_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+            //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        //}
+
+        return { HANDOVER_SUCCESS: intra_handover_success.length, HANDOVER_ATTEMPT: intra_handover_attempt.length }
+    }
+
+    nemo_irat_handover(data, filter?: any): any {
+
+        if (!data.HOA) throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.HOS) throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
+
+        let irat_handover_attempt = data.HOA.filter(entry => ['904'].includes(entry.HO_TYPE))
+
+        //filter HOA within the polygon if any
+        //if (filter.area) {
+        //    irat_handover_attempt = irat_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        let irat_handover_success = data.HOS.filter((entry) => {
+            return irat_handover_attempt.find((hoa_entry) => {
+                return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim()
+            })
+        })
+        
+        //if (filter.area) {
+        //    irat_handover_success = irat_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+            //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        //}
+
+        return { HANDOVER_SUCCESS: irat_handover_success.length, HANDOVER_ATTEMPT: irat_handover_attempt.length }
+    }
+
+    nemo_volte_call(data,filter?:any){
+
+        if (!data.CAA) throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD) throw console.error('CAD is not decoded while parsing logfile. Consider update decoder field.');
+
+
+        let volte_call_attempt = data.CAA.map(entry => {
+            let terminated_call = data.CAC.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            if(!terminated_call){
+                terminated_call = data.CAF.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            }
+            return {...entry,terminated:terminated_call}
+        }).filter(entry =>{ 
+            //console.table(entry)
+            if(!entry.terminated){
+                throw console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                //return false
+            }else if(!(entry.terminated.CALL_TYPE == '14')){
+                return false
+            }
+
+            if('FAIL' in entry.terminated){
+                if(entry.terminated.FAIL == '5'){return false}
+            }
+            return true
+        })
+
+        //volte_call_attempt = filter.area? volte_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : volte_call_attempt
+        
+        let volte_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '14' && entry.CALL_STATUS == "3").map(entry => {
+            let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
+            let end_time = this.GetEpochTime(entry.TIME)
+            return {...entry,SETUP_TIME:end_time-start_time}
+        })
+        
+        //volte_call_connected = filter.area? volte_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_connected
+
+        let volte_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1")
+        
+        //volte_call_drop = filter.area? volte_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_drop
+        
+        return {
+            VOLTE_CALL_ATTEMPT:volte_call_attempt,
+            VOLTE_CALL_CONNECTED:volte_call_connected,
+            VOLTE_CALL_DROP:volte_call_drop}
+    }
+
+    nemo_csfb_call(data,filter?:any){
+
+        if (!data.CAA) throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+
+        //console.time("nemo_csfb_call")
+        let csfb_call_attempt = data.CAA.map(entry => {
+            let terminated_call = data.CAC.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            if(!terminated_call){
+                terminated_call = data.CAF.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            }
+            return {...entry,terminated:terminated_call}
+        }).filter(entry =>{ 
+            //console.table(entry)
+            if(!entry.terminated){
+                console.log(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                return false
+            }else if(!(entry.terminated.CALL_TYPE == '1')){
+                return false
+            }
+            if('FAIL' in entry.terminated){
+                if(entry.terminated.FAIL == '5'){return false}
+            }
+            return true
+        })
+
+        //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
+        
+        let csfb_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '1' && entry.CALL_STATUS == "2").map(entry => {
+            let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
+            let end_time = this.GetEpochTime(entry.TIME)
+            return {...entry,SETUP_TIME:end_time-start_time}
+        })
+        
+        //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
+        
+        let csfb_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1")
+        
+        //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
+        
+        return {CSFB_CALL_ATTEMPT:csfb_call_attempt,CSFB_CALL_CONNECTED:csfb_call_connected,CSFB_CALL_DROP:csfb_call_drop}
+    }
+
+    nemo_packet_data_setup(data, filter?: any) {
+        
+        if (!data.PAA) throw console.error('PAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.PAC) throw console.error('PAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.PAD) throw console.error('PAD is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let PAA = filter.area ? data.PAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.PAA
+        let PAA = data.PAA
+
+        let PAC = data.PAC.filter((entry) => {
+            return PAA.find((paa_entry) => paa_entry.PACKET_SESSION_CONTEXT == entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.PACKET_STATE == '2')
+        })
+
+        let PAD = data.PAD.filter((entry) => {
+            return PAA.find(paa_entry => paa_entry.PACKET_SESSION_CONTEXT = entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.DEACT_STATUS != "1")
+        })
+
+        //if (filter.area) {
+        //    PAC = PAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //    PAD = PAD.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        return { PACKET_DATA_SETUP_ATTEMPT: PAA.length, PACKET_DATA_SETUP_SUCCESS: PAC.length, PACKET_DATA_DROP: PAD.length }
+    }
+
+    nemo_data_server_setup(data, filter?: any) {
+
+        if (!data.DAA) throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DAC) throw console.error('DAC is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DAA
+        let DAA = data.DAA
+
+        let DAC = data.DAC.filter((entry) => {
+            return DAA.find(daa_entry => daa_entry.DATA_CONTEXT == entry.DATA_CONTEXT && daa_entry.file == entry.file)
+        })
+
+        let DATA_SETUP_TIME = DAC.reduce((acc, cur) => {
+            let end = this.GetEpochTime(cur.TIME)
+            let start = this.GetEpochTime(DAA.find((entry) => entry.DATA_CONTEXT == cur.DATA_CONTEXT && entry.file == cur.file).TIME)
+            return [...acc, end - start]
+        }, [])
+
+        //if (filter.area) {
+        //    DAC = DAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        return { DATA_CONNECT_ATTEMPT: DAA.length, DATA_CONNECT_SUCCESS: DAC.length, DATA_SETUP_TIME: DATA_SETUP_TIME }
+    }
+
+    nemo_tracking_area_update(data, filter?: any) {
+        
+        if (!data.TUA) throw console.error('TUA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.TUS) throw console.error('TUS is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let TUA = filter.area ? data.TUA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.TUA
+        let TUA = data.TUA
+
+        let TUS = data.TUS.filter((entry) => {
+            return TUA.find(tua_entry => tua_entry.TAU_CONTEXT == entry.TAU_CONTEXT && tua_entry.file == entry.file)
+        })
+
+        //if (filter.area) {
+        //    TUS = TUS.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        return { TRACKING_AREA_UPDATE_ATTEMPT: TUA.length, TRACKING_AREA_UPDATE_SUCCESS: TUS.length }
+    }
+
+    nemo_pdsch_bler(data, filter?: any) {
+
+        if (!data.PHRATE) throw console.error('PHRATE is not decoded while parsing logfile. Consider update decoder field.');
+
+        let PHRATE = data.PHRATE.filter(entry => entry.BLER != '' && entry.CELLTYPE == '0')
+
+        //if (filter.area) {
+        //    PHRATE = PHRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+
+        return { PDSCH_BLER: PHRATE.filter(entry=> entry.CELLTYPE == "0" && entry.BLER != '').map(x => parseFloat(x.BLER)) }
+    }
+    
+    nemo_mos_quality(data,filter?:any){
+        
+        if (!data.AQDL) throw console.error('AQDL is not decoded while parsing logfile. Consider update decoder field.');
+
+        //let AQDL = filter.area? data.AQDL.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.AQDL
+        let AQDL = data.AQDL
+
+        //console.table(AQDL)
+        //filter POQLA NB
+        AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '7')
+        return {AQDL:AQDL.map(entry => parseFloat(entry.MOS))}
+    }
+
 }
