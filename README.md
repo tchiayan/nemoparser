@@ -46,7 +46,8 @@ Nemo Parameter
             LON | float (degree),
             duplicate | boolean
         }
-    }```
+    }
+    ```
 
 - LTE_TDD_SCANNER_MEASUREMENT
 
