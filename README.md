@@ -11,7 +11,7 @@ Class NemoParser
 
 
 Class LogfileBuffer
-- Constructor (fileBuffer|FileString, filename|string)
+> Constructor (fileBuffer|FileString, filename|string)
 
 Nemo Parameter
 - 'LTE_FDD_SCANNER_MEASUREMENT'
