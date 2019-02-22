@@ -1,9 +1,32 @@
 import { NemoParser, LogfileBuffer } from './index'
-import { JSDOM } from 'jsdom'
 import { readFileSync, readdirSync,writeFileSync, write } from 'fs'
-import { basename } from 'path'
 import { expect } from 'chai'
-import { Parser as Json2csvParser } from 'json2csv'
+
+describe('FUNCTION RESPONSE TEST',()=>{
+    it('PARSING FILE RESPONSE',()=>{
+        const directory = './server-test/logfiles/TDD_SCANNER_LOGFILE';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_TDD_SCANNER_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                expect(res.result).to.be.an('object')
+            }else if(res.status === 'PARSING'){
+                expect(res.progress).to.be.an('number')
+            }else if(res.status === 'CALCULATING'){
+                //console.log("CALCULATING")
+            }
+            
+        })
+    })
+})
 
 describe('FILE PARSING TEST',() => {
     it('LOAD TDD SCANNER FILE | LTE_FDD_SCANNER_MEASUREMENT',()=>{
@@ -17,13 +40,17 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['LTE_TDD_SCANNER_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            testClass.displayGrid(['LTE_TDD_SCANNER_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
-                for(let i of Object.keys(result)){
-                    expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
-                    expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
-                    expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
+                if(res.status === "OK"){
+                    let result = res.result
+                    for(let i of Object.keys(result)){
+                        expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
+                        expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
+                        expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
+                    }
                 }
+                
             })
     })
 
@@ -38,17 +65,21 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
-                for(let i of Object.keys(result)){
-                    //expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
-                    //expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
-                    //expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
-                    expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
-                    expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
-                    expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
-                    //console.log(result[i]['DL_TP'][0])
-                    //console.log(result[i]['DL_TP_SNR'][0])
+                if(res.status === "OK"){
+                    let result = res.result
+                    //console.log(res)
+                    for(let i of Object.keys(result)){
+                        //expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
+                        //expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
+                        //expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
+                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                        expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+                        expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
+                        //console.log(result[i]['DL_TP'][0])
+                        //console.log(result[i]['DL_TP_SNR'][0])
+                    }
                 }
             })
     })
@@ -64,12 +95,16 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['ATTACH_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            testClass.displayGrid(['ATTACH_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
-                for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['ATTACH_ATTEMPT'])
-                    expect(result[i]['ATTACH_ATTEMPT']).to.be.an('number').greaterThan(0)
+                if(res.status === "OK"){
+                    let result = res.result
+                    for(let i of Object.keys(result)){
+                        expect(result[i]).to.have.keys(['ATTACH_ATTEMPT'])
+                        expect(result[i]['ATTACH_ATTEMPT']).to.be.an('number').greaterThan(0)
+                    }
                 }
+                
             })
     })
 
@@ -84,11 +119,14 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['FTP_CONNECTION_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            testClass.displayGrid(['FTP_CONNECTION_ATTEMPT'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
-                for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['FTP_CONNECT_ATTEMPT'])
-                    expect(result[i]['FTP_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
+                if(res.status === "OK"){
+                    let result = res.result
+                    for(let i of Object.keys(result)){
+                        expect(result[i]).to.have.keys(['FTP_CONNECT_ATTEMPT'])
+                        expect(result[i]['FTP_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
+                    }
                 }
             })
     })
@@ -104,12 +142,15 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['INTRA_HANDOVER'],{fileBuffer:bufferArray}).subscribe((result)=>{
+        testClass.displayGrid(['INTRA_HANDOVER'],{fileBuffer:bufferArray}).subscribe((res)=>{
             //console.log(result)
-            for(let i of Object.keys(result)){
-                expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
-                expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
-                expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+            if(res.status === "OK"){
+                let result = res.result
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                    expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
+                    expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+                }
             }
         })
     })
@@ -125,11 +166,14 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['IRAT_HANDOVER'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            for(let i of Object.keys(result)){
-                expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
-                //expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
-                //expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+        testClass.displayGrid(['IRAT_HANDOVER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                    //expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
+                    //expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
+                }
             }
         })
     })
@@ -145,13 +189,16 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['PDP_CONTEXT_SETUP'],{fileBuffer:bufferArray}).subscribe((result)=>{
+            testClass.displayGrid(['PDP_CONTEXT_SETUP'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
-                for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['PACKET_DATA_SETUP_ATTEMPT','PACKET_DATA_SETUP_SUCCESS','PACKET_DATA_DROP'])
-                    expect(result[i]['PACKET_DATA_DROP']).to.be.an('number')
-                    expect(result[i]['PACKET_DATA_SETUP_ATTEMPT']).to.be.an('number').greaterThan(0)
-                    expect(result[i]['PACKET_DATA_SETUP_SUCCESS']).to.be.an('number').greaterThan(0)
+                if(res.status === "OK"){
+                    let result = res.result
+                    for(let i of Object.keys(result)){
+                        expect(result[i]).to.have.keys(['PACKET_DATA_SETUP_ATTEMPT','PACKET_DATA_SETUP_SUCCESS','PACKET_DATA_DROP'])
+                        expect(result[i]['PACKET_DATA_DROP']).to.be.an('number')
+                        expect(result[i]['PACKET_DATA_SETUP_ATTEMPT']).to.be.an('number').greaterThan(0)
+                        expect(result[i]['PACKET_DATA_SETUP_SUCCESS']).to.be.an('number').greaterThan(0)
+                    }
                 }
             })
     })
@@ -168,12 +215,15 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['DATA_CONNECTION_SETUP'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['DATA_CONNECTION_SETUP']
-            expect(data).to.have.keys(['DATA_CONNECT_ATTEMPT','DATA_CONNECT_SUCCESS','DATA_SETUP_TIME'])
-            expect(data['DATA_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
-            expect(data['DATA_CONNECT_SUCCESS']).to.be.an('number').greaterThan(0)
-            expect(data['DATA_SETUP_TIME']).to.be.an('array').have.lengthOf.greaterThan(0)
+        testClass.displayGrid(['DATA_CONNECTION_SETUP'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['DATA_CONNECTION_SETUP']
+                expect(data).to.have.keys(['DATA_CONNECT_ATTEMPT','DATA_CONNECT_SUCCESS','DATA_SETUP_TIME'])
+                expect(data['DATA_CONNECT_ATTEMPT']).to.be.an('number').greaterThan(0)
+                expect(data['DATA_CONNECT_SUCCESS']).to.be.an('number').greaterThan(0)
+                expect(data['DATA_SETUP_TIME']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
         })
     })
 
@@ -188,11 +238,14 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['TRACKING_AREA_UPDATE'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['TRACKING_AREA_UPDATE']
-            expect(data).to.have.keys(['TRACKING_AREA_UPDATE_ATTEMPT','TRACKING_AREA_UPDATE_SUCCESS'])
-            expect(data['TRACKING_AREA_UPDATE_SUCCESS']).to.be.an('number').greaterThan(0)
-            expect(data['TRACKING_AREA_UPDATE_ATTEMPT']).to.be.an('number').greaterThan(0)
+        testClass.displayGrid(['TRACKING_AREA_UPDATE'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['TRACKING_AREA_UPDATE']
+                expect(data).to.have.keys(['TRACKING_AREA_UPDATE_ATTEMPT','TRACKING_AREA_UPDATE_SUCCESS'])
+                expect(data['TRACKING_AREA_UPDATE_SUCCESS']).to.be.an('number').greaterThan(0)
+                expect(data['TRACKING_AREA_UPDATE_ATTEMPT']).to.be.an('number').greaterThan(0)
+            }
         })
     })
 
@@ -207,10 +260,13 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['PDSCH_BLER'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['PDSCH_BLER']
-            expect(data).to.have.keys(['PDSCH_BLER'])
-            expect(data['PDSCH_BLER']).to.be.an('array').have.lengthOf.greaterThan(0)
+        testClass.displayGrid(['PDSCH_BLER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['PDSCH_BLER']
+                expect(data).to.have.keys(['PDSCH_BLER'])
+                expect(data['PDSCH_BLER']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
         })
     })
 
@@ -225,10 +281,13 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['APPLICATION_THROUGHPUT_UPLINK'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['APPLICATION_THROUGHPUT_UPLINK']
-            expect(data).to.have.keys(['UL_TP'])
-            expect(data['UL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+        testClass.displayGrid(['APPLICATION_THROUGHPUT_UPLINK'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['APPLICATION_THROUGHPUT_UPLINK']
+                expect(data).to.have.keys(['UL_TP'])
+                expect(data['UL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
         })
     })
 
@@ -243,12 +302,15 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['VOLTE_CALL'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['VOLTE_CALL']
-            expect(data).to.have.keys(['VOLTE_CALL_ATTEMPT','VOLTE_CALL_CONNECTED','VOLTE_CALL_DROP'])
-            expect(data['VOLTE_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
-            expect(data['VOLTE_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
-            expect(data['VOLTE_CALL_DROP']).to.be.an('array')
+        testClass.displayGrid(['VOLTE_CALL'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['VOLTE_CALL']
+                expect(data).to.have.keys(['VOLTE_CALL_ATTEMPT','VOLTE_CALL_CONNECTED','VOLTE_CALL_DROP'])
+                expect(data['VOLTE_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['VOLTE_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['VOLTE_CALL_DROP']).to.be.an('array')
+            }
         })
     })
 
@@ -263,18 +325,21 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-        testClass.displayGrid(['CSFB_CALL'],{fileBuffer:bufferArray}).subscribe((result)=>{
-            let data = result['CSFB_CALL']
-            expect(data).to.have.keys(['CSFB_CALL_ATTEMPT','CSFB_CALL_CONNECTED','CSFB_CALL_DROP'])
-            expect(data['CSFB_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
-            expect(data['CSFB_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
-            expect(data['CSFB_CALL_DROP']).to.be.an('array')
+        testClass.displayGrid(['CSFB_CALL'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['CSFB_CALL']
+                expect(data).to.have.keys(['CSFB_CALL_ATTEMPT','CSFB_CALL_CONNECTED','CSFB_CALL_DROP'])
+                expect(data['CSFB_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['CSFB_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['CSFB_CALL_DROP']).to.be.an('array')
+            }
         })
     })
 
 })
 
-describe('FUNCTIONALITY/KPI TEST',()=>{
+/*describe('FUNCTIONALITY/KPI TEST',()=>{
     
     it('LTE_FDD_SCANNER_MEASUREMENT TEST',()=>{
         //const jsdom = new JSDOM("<!doctype html><html><body><input type='file' id='fileinput' /></body></html>")
@@ -351,4 +416,4 @@ describe('FUNCTIONALITY/KPI TEST',()=>{
             
         })
     })
-})
+})*/

@@ -18,7 +18,8 @@ Nemo Parameter
 - LTE_FDD_SCANNER_MEASUREMENT
     
     DisplayGrid return result format as follow:
-    ```{
+    ```
+    {
         SCANNER_RSRP:Array[]{
             RSRP | float,
             TIME | string,

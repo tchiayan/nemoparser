@@ -14,30 +14,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var NemoParameterGrid = /** @class */ (function () {
     function NemoParameterGrid() {
     }
-    NemoParameterGrid.prototype.nemo_scanner_measurement = function (data) {
-        console.time("nemo_scanner_measurement");
-        //let OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
-        if (!data.OFDMSCAN)
-            throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
-        var OFDMSCAN = data.OFDMSCAN;
-        var files = Array.from(new Set(OFDMSCAN.map(function (entry) { return entry.file; })));
-        var RSRP = [];
-        var CINR = [];
-        var RSRQ = [];
-        var _loop_1 = function (file) {
-            var filter_data = data.OFDMSCAN.filter(function (entry) { return entry.file == file; });
-            RSRP = RSRP.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRP'));
-            CINR = CINR.concat(this_1.nemo_scanner_field_n_best(filter_data, 'CINR'));
-            RSRQ = RSRQ.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRQ'));
-        };
-        var this_1 = this;
-        for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
-            var file = files_1[_i];
-            _loop_1(file);
-        }
-        console.timeEnd("nemo_scanner_measurement");
-        return { 'SCANNER_RSRP': RSRP, 'SCANNER_CINR': CINR, 'SCANNER_RSRQ': RSRQ };
-    };
     NemoParameterGrid.prototype.nemo_scanner_field_n_best = function (data, field) {
         var rfield = data.map(function (entry, index, array) {
             //let empty_field = {}
@@ -121,6 +97,470 @@ var NemoParameterGrid = /** @class */ (function () {
         });
         //console.table(rfield)
         return rfield;
+    };
+    NemoParameterGrid.prototype.GetEpochTime = function (timeString) {
+        return Date.parse("1970-01-01T" + timeString + "Z");
+    };
+    NemoParameterGrid.prototype.nemo_scanner_measurement = function (data) {
+        //console.time("nemo_scanner_measurement")
+        //let OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
+        if (!data.OFDMSCAN)
+            throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
+        var OFDMSCAN = data.OFDMSCAN;
+        var files = Array.from(new Set(OFDMSCAN.map(function (entry) { return entry.file; })));
+        var RSRP = [];
+        var CINR = [];
+        var RSRQ = [];
+        var _loop_1 = function (file) {
+            var filter_data = data.OFDMSCAN.filter(function (entry) { return entry.file == file; });
+            RSRP = RSRP.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRP'));
+            CINR = CINR.concat(this_1.nemo_scanner_field_n_best(filter_data, 'CINR'));
+            RSRQ = RSRQ.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRQ'));
+        };
+        var this_1 = this;
+        for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
+            var file = files_1[_i];
+            _loop_1(file);
+        }
+        //console.timeEnd("nemo_scanner_measurement")
+        return { 'SCANNER_RSRP': RSRP, 'SCANNER_CINR': CINR, 'SCANNER_RSRQ': RSRQ };
+    };
+    NemoParameterGrid.prototype.nemo_application_throughput_downlink_filter_sinr = function (data, sinr_value) {
+        var _this = this;
+        //console.time("nemo_application_throughput_downlink_filter_sinr")
+        if (!data.DRATE)
+            throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CI)
+            throw console.error('CI is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DREQ)
+            throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DCOMP)
+            throw console.error('DCOMP is not decoded while parsing logfile. Consider update decoder field.');
+        data.DRATE = data.DRATE.map(function (entry) { return __assign({}, entry, { ETIME: _this.GetEpochTime(entry.TIME) }); });
+        var file_list = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
+        var temp_DRATE = [];
+        var _loop_2 = function (file) {
+            var temp_drate = data.DRATE.filter(function (entry) { return entry.file == file; }).sort(function (a, b) { return a.ETIME - b.ETIME; });
+            var _loop_4 = function (i) {
+                if (!(i == 0)) {
+                    temp_drate[i].LAT = temp_drate[i - 1].LAT;
+                    temp_drate[i].LON = temp_drate[i - 1].LON;
+                    temp_drate[i].TIME = temp_drate[i - 1].TIME;
+                    temp_drate[i]['duplicate'] = temp_drate[i].ETIME == temp_drate[i - 1].ETIME;
+                    temp_drate[i].ETIME = this_2.GetEpochTime(temp_drate[i].TIME);
+                }
+                else {
+                    var DREQ = data.DREQ.find(function (entry) { return entry.file == temp_drate[i].file; });
+                    temp_drate[i].LAT = DREQ.LAT;
+                    temp_drate[i].LON = DREQ.LON;
+                    temp_drate[i].TIME = DREQ.TIME;
+                    temp_drate[i].ETIME = this_2.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i]['duplicate'] = false;
+                }
+            };
+            //console.log(temp_drate)
+            for (var i = temp_drate.length - 1; i >= 0; i--) {
+                _loop_4(i);
+            }
+            temp_DRATE = temp_DRATE.concat(temp_drate);
+        };
+        var this_2 = this;
+        for (var _i = 0, file_list_1 = file_list; _i < file_list_1.length; _i++) {
+            var file = file_list_1[_i];
+            _loop_2(file);
+        }
+        data.DRATE = temp_DRATE;
+        data.DRATE.sort(function (a, b) { return a.ETIME - b.ETIME; });
+        data.DRATE = data.DRATE.filter(function (entry) { return !entry.duplicate; });
+        //data.DRATE.sort((a, b) => b.ETIME - a.ETIME)
+        var DL_SNR = [];
+        if (data.CI) {
+            // attach CINR to dl throughput
+            //console.time("nemo_dl_snr_attach")
+            //Get file list
+            var file_list_3 = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
+            var _loop_3 = function (file) {
+                SINR = data.CI.filter(function (entry) { return entry.CELLTYPE === '0' && entry.file === file; }).map(function (entry) {
+                    return { TIME: entry.TIME, ETIME: _this.GetEpochTime(entry.TIME), file: entry.file, CELLTYPE: entry.CELLTYPE, CINR: parseFloat(entry.CINR) };
+                }).sort(function (a, b) { return a.ETIME - b.ETIME; }); //.filter(entry => entry.ETIME >= DRATE[0].ETIME - 500)
+                //console.log('TEST')
+                //console.log("SINR value")
+                //console.log(data.CI)
+                if (!SINR.find(function (entry) { return entry.CINR >= sinr_value; })) {
+                    return "continue";
+                }
+                var FIRST_PASS = SINR.find(function (entry) { return entry.CINR >= sinr_value; }).ETIME;
+                var DRATE = data.DRATE.filter(function (entry) { return entry.file === file; }).sort(function (a, b) { return a.ETIME - b.ETIME; }).filter(function (entry) { return entry.ETIME >= FIRST_PASS; });
+                SINR = SINR.filter(function (entry) { return entry.ETIME >= DRATE[0].ETIME - 500; });
+                var SINR_CURSOR = 0;
+                //console.log(DRATE)
+                //console.log(`STARTING CURSOR IS ${SINR_CURSOR} | TIME ${SINR[SINR_CURSOR].TIME} | DRATE TIME | ${DRATE[0].TIME} | MEASUREMENT | ${DRATE[0].file}`)
+                for (var i = 0; i < DRATE.length - 1; i++) {
+                    var DLSNR = [];
+                    var FIRST_ENTRY_1 = true;
+                    //console.log(`Current DL Time: ${DRATE[i].TIME} [${DRATE[i].ETIME}] | Next DL Time: ${DRATE[i+1].TIME} [${DRATE[i+1].ETIME}] Found table below`)
+                    while (DRATE[i + 1].ETIME >= SINR[SINR_CURSOR].ETIME) {
+                        if (DRATE[i].ETIME <= SINR[SINR_CURSOR].ETIME) {
+                            if (FIRST_ENTRY_1) {
+                                if (i == 0) {
+                                    var temp_SINR = [];
+                                    var j = 0;
+                                    while (j !== SINR_CURSOR) {
+                                        //console.log(`${DRATE[i].ETIME-1000} >= ${SINR[j].ETIME} | ${DRATE[i].ETIME-1000>=SINR[j].ETIME} | ${SINR[j].CINR}`)
+                                        temp_SINR.push(SINR[j].CINR);
+                                        j++;
+                                    }
+                                    DLSNR.push(Math.max.apply(Math, temp_SINR));
+                                }
+                                else {
+                                    DLSNR.push(SINR[SINR_CURSOR - 1].CINR);
+                                }
+                                FIRST_ENTRY_1 = false;
+                            }
+                            DLSNR.push(SINR[SINR_CURSOR].CINR);
+                        }
+                        SINR_CURSOR++;
+                    }
+                    //console.table(DLSNR)
+                    //if(DRATE[i].TIME == '11:02:12.434'){console.table(DRATE[i])}
+                    if (i == 0) {
+                        DRATE[i]['CINR'] = Math.max(DLSNR[0], DLSNR[DLSNR.length - 1]);
+                        DRATE[i]['CINR_INDEX'] = DLSNR[0] >= sinr_value ? 0 : 1;
+                    }
+                    else {
+                        DRATE[i]['CINR'] = Math.max(DLSNR[0], DLSNR[DLSNR.length - 1]);
+                        DRATE[i]['CINR_INDEX'] = DLSNR.indexOf(DRATE[i]['CINR']);
+                    }
+                    DRATE[i]['INDEX'] = i;
+                }
+                //attach SINR to last DRATE
+                var FIRST_ENTRY = true;
+                var DLSNR1 = [];
+                var DCOMP = data.DCOMP.find(function (entry) { return entry.file == file; }) ? this_3.GetEpochTime(data.DCOMP.find(function (entry) { return entry.file == file; }).TIME) : SINR[SINR_CURSOR].ETIME + 2000;
+                //console.table(DCOMP)
+                while (SINR_CURSOR < SINR.length) {
+                    if ((DRATE[DRATE.length - 1].ETIME <= SINR[SINR_CURSOR].ETIME) && (SINR[SINR_CURSOR].ETIME <= DCOMP)) {
+                        if (FIRST_ENTRY) {
+                            DLSNR1.push(SINR[SINR_CURSOR - 1].CINR);
+                            FIRST_ENTRY = false;
+                        }
+                        //console.log(`${SINR[SINR_CURSOR].CINR}|${SINR[SINR_CURSOR].TIME}|${DRATE[DRATE.length-1].TIME}`)
+                        DLSNR1.push(SINR[SINR_CURSOR].CINR);
+                    }
+                    SINR_CURSOR++;
+                }
+                //console.table(DLSNR1)
+                DRATE[DRATE.length - 1]['CINR'] = Math.max(DLSNR1[0], DLSNR1[DLSNR1.length - 1]);
+                DRATE[DRATE.length - 1]['CINR_INDEX'] = DLSNR1.indexOf(DRATE[DRATE.length - 1]['CINR']);
+                //DL_SNR = [...DL_SNR, ...DRATE.filter(x => x.CINR >= 10).filter((x,i) => !(i===0 && x.CINR_INDEX !==0))]
+                DL_SNR = DL_SNR.concat(DRATE.filter(function (x) { return x.CINR >= sinr_value; }));
+                //console.log(DL_SNR)
+                //DL_SNR = [...DL_SNR, ...DRATE]
+            };
+            var this_3 = this, SINR;
+            //Process file
+            for (var _a = 0, file_list_2 = file_list_3; _a < file_list_2.length; _a++) {
+                var file = file_list_2[_a];
+                _loop_3(file);
+            }
+            //console.log(`Current DL Time: ${entry.TIME} [${entry.ETIME}] | Next DL Time: ${array[index+1].TIME} [${array[index+1].ETIME}] Found table below`)
+            //console.table(CINR)
+            //console.timeEnd("nemo_dl_snr_attach")
+        }
+        //let DL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
+        var DL = data.DRATE;
+        //console.log(DL_SNR)
+        //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
+        //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
+        //console.table(DL_SNR)
+        DL_SNR = DL_SNR.map(function (x) { return { CINR: x.CINR, DL: parseInt(x.DL), TIME: x.TIME }; });
+        DL = DL.map(function (x) { return parseInt(x.DL); });
+        //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
+        //console.log(`${DL_SNR.filter(x => x.DL >= 60000000 && x.CINR >= 10).length}/${DL_SNR.filter(x => x.CINR >= 10).length}`)
+        //padl max
+        //let psdlmax = (Math.max(...DL) / 1000000).toFixed(2) + "Mbps"
+        //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
+        //console.timeEnd('nemo_application_throughput_downlink_filter_sinr')
+        return { DL_TP: DL, DL_TP_SNR: DL_SNR };
+    };
+    NemoParameterGrid.prototype.nemo_application_throughput_uplink = function (data, filter) {
+        var _this = this;
+        //shift time location
+        //console.time("shiftLoc")
+        if (!data.DRATE)
+            throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DREQ)
+            throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.');
+        data.DRATE = data.DRATE.map(function (entry) { return __assign({}, entry, { ETIME: _this.GetEpochTime(entry.TIME) }); });
+        var file_list = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
+        var temp_DRATE = [];
+        var _loop_5 = function (file) {
+            var temp_drate = data.DRATE.filter(function (entry) { return entry.file == file; }).sort(function (a, b) { return a.ETIME - b.ETIME; });
+            var _loop_6 = function (i) {
+                if (!(i == 0)) {
+                    temp_drate[i].LAT = temp_drate[i - 1].LAT;
+                    temp_drate[i].LON = temp_drate[i - 1].LON;
+                    temp_drate[i].TIME = temp_drate[i - 1].TIME;
+                    temp_drate[i]['duplicate'] = temp_drate[i].ETIME == temp_drate[i - 1].ETIME;
+                    temp_drate[i].ETIME = this_4.GetEpochTime(temp_drate[i].TIME);
+                }
+                else {
+                    var DREQ = data.DREQ.find(function (entry) { return entry.file == temp_drate[i].file; });
+                    temp_drate[i].LAT = DREQ.LAT;
+                    temp_drate[i].LON = DREQ.LON;
+                    temp_drate[i].TIME = DREQ.TIME;
+                    temp_drate[i].ETIME = this_4.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i]['duplicate'] = false;
+                    //console.table(temp_drate[i])
+                }
+            };
+            for (var i = temp_drate.length - 1; i >= 0; i--) {
+                _loop_6(i);
+            }
+            temp_DRATE = temp_DRATE.concat(temp_drate);
+        };
+        var this_4 = this;
+        for (var _i = 0, file_list_4 = file_list; _i < file_list_4.length; _i++) {
+            var file = file_list_4[_i];
+            _loop_5(file);
+        }
+        data.DRATE = temp_DRATE;
+        data.DRATE.sort(function (a, b) { return a.ETIME - b.ETIME; });
+        data.DRATE = data.DRATE.filter(function (entry) { return !entry.duplicate; });
+        //console.timeEnd("shiftLoc")
+        //console.time("nemo_application_throughput_uplink")
+        //let UL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
+        var UL = data.DRATE;
+        UL = UL.map(function (x) { return parseInt(x.UL); });
+        //padl max
+        //let psdlmax = (Math.max(...DL) / 1000000).toFixed(2) + "Mbps"
+        //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
+        //console.timeEnd("nemo_application_throughput_uplink")
+        return { UL_TP: UL };
+    };
+    NemoParameterGrid.prototype.nemo_attach_attempt = function (data, filter) {
+        if (!data.GAA)
+            throw console.error('GAA is not decoded while parsing logfile. Consider update decoder field.');
+        //let GAA = filter.area ? data.GAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.GAA
+        var GAA = data.GAA;
+        return { ATTACH_ATTEMPT: GAA.length };
+    };
+    NemoParameterGrid.prototype.nemo_ftp_server_connection_attempt = function (data, filter) {
+        if (!data.DAA)
+            throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
+        //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]),filter.area, {ignoreBoundary:false})) : data.DAA
+        var DAA = data.DAA;
+        return { FTP_CONNECT_ATTEMPT: DAA.length };
+    };
+    NemoParameterGrid.prototype.nemo_intra_handover = function (data, filter) {
+        //console.time("nemo_intra_handover")
+        if (!data.HOA)
+            throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.HOS)
+            throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
+        var intra_handover_attempt = data.HOA.filter(function (entry) { return ['901', '902', '903'].includes(entry.HO_TYPE); });
+        //filter HOA within the polygon if any
+        //if (filter.area) {
+        //    intra_handover_attempt = intra_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        var intra_handover_success = data.HOS.filter(function (entry) {
+            return intra_handover_attempt.find(function (hoa_entry) {
+                return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim();
+            });
+        });
+        //if (filter.area) {
+        //    intra_handover_success = intra_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        //}
+        return { HANDOVER_SUCCESS: intra_handover_success.length, HANDOVER_ATTEMPT: intra_handover_attempt.length };
+    };
+    NemoParameterGrid.prototype.nemo_irat_handover = function (data, filter) {
+        if (!data.HOA)
+            throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.HOS)
+            throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
+        var irat_handover_attempt = data.HOA.filter(function (entry) { return ['904'].includes(entry.HO_TYPE); });
+        //filter HOA within the polygon if any
+        //if (filter.area) {
+        //    irat_handover_attempt = irat_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        var irat_handover_success = data.HOS.filter(function (entry) {
+            return irat_handover_attempt.find(function (hoa_entry) {
+                return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim();
+            });
+        });
+        //if (filter.area) {
+        //    irat_handover_success = irat_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        //}
+        return { HANDOVER_SUCCESS: irat_handover_success.length, HANDOVER_ATTEMPT: irat_handover_attempt.length };
+    };
+    NemoParameterGrid.prototype.nemo_volte_call = function (data, filter) {
+        var _this = this;
+        if (!data.CAA)
+            throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC)
+            throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF)
+            throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD)
+            throw console.error('CAD is not decoded while parsing logfile. Consider update decoder field.');
+        var volte_call_attempt = data.CAA.map(function (entry) {
+            var terminated_call = data.CAC.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            if (!terminated_call) {
+                terminated_call = data.CAF.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            }
+            return __assign({}, entry, { terminated: terminated_call });
+        }).filter(function (entry) {
+            //console.table(entry)
+            if (!entry.terminated) {
+                throw console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
+                //return false
+            }
+            else if (!(entry.terminated.CALL_TYPE == '14')) {
+                return false;
+            }
+            if ('FAIL' in entry.terminated) {
+                if (entry.terminated.FAIL == '5') {
+                    return false;
+                }
+            }
+            return true;
+        });
+        //volte_call_attempt = filter.area? volte_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : volte_call_attempt
+        var volte_call_connected = data.CAC.filter(function (entry) { return entry.CALL_TYPE == '14' && entry.CALL_STATUS == "3"; }).map(function (entry) {
+            var start_time = _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
+            var end_time = _this.GetEpochTime(entry.TIME);
+            return __assign({}, entry, { SETUP_TIME: end_time - start_time });
+        });
+        //volte_call_connected = filter.area? volte_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_connected
+        var volte_call_drop = data.CAD.filter(function (entry) { return entry.DROP_REASON != "1"; });
+        //volte_call_drop = filter.area? volte_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_drop
+        return {
+            VOLTE_CALL_ATTEMPT: volte_call_attempt,
+            VOLTE_CALL_CONNECTED: volte_call_connected,
+            VOLTE_CALL_DROP: volte_call_drop
+        };
+    };
+    NemoParameterGrid.prototype.nemo_csfb_call = function (data, filter) {
+        var _this = this;
+        if (!data.CAA)
+            throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC)
+            throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF)
+            throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD)
+            throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        //console.time("nemo_csfb_call")
+        var csfb_call_attempt = data.CAA.map(function (entry) {
+            var terminated_call = data.CAC.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            if (!terminated_call) {
+                terminated_call = data.CAF.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            }
+            return __assign({}, entry, { terminated: terminated_call });
+        }).filter(function (entry) {
+            //console.table(entry)
+            if (!entry.terminated) {
+                console.log("terminating call not found possiblity logfile error FILE:" + entry.file);
+                return false;
+            }
+            else if (!(entry.terminated.CALL_TYPE == '1')) {
+                return false;
+            }
+            if ('FAIL' in entry.terminated) {
+                if (entry.terminated.FAIL == '5') {
+                    return false;
+                }
+            }
+            return true;
+        });
+        //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
+        var csfb_call_connected = data.CAC.filter(function (entry) { return entry.CALL_TYPE == '1' && entry.CALL_STATUS == "2"; }).map(function (entry) {
+            var start_time = _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
+            var end_time = _this.GetEpochTime(entry.TIME);
+            return __assign({}, entry, { SETUP_TIME: end_time - start_time });
+        });
+        //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
+        var csfb_call_drop = data.CAD.filter(function (entry) { return entry.DROP_REASON != "1"; });
+        //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
+        return { CSFB_CALL_ATTEMPT: csfb_call_attempt, CSFB_CALL_CONNECTED: csfb_call_connected, CSFB_CALL_DROP: csfb_call_drop };
+    };
+    NemoParameterGrid.prototype.nemo_packet_data_setup = function (data, filter) {
+        if (!data.PAA)
+            throw console.error('PAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.PAC)
+            throw console.error('PAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.PAD)
+            throw console.error('PAD is not decoded while parsing logfile. Consider update decoder field.');
+        //let PAA = filter.area ? data.PAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.PAA
+        var PAA = data.PAA;
+        var PAC = data.PAC.filter(function (entry) {
+            return PAA.find(function (paa_entry) { return paa_entry.PACKET_SESSION_CONTEXT == entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.PACKET_STATE == '2'; });
+        });
+        var PAD = data.PAD.filter(function (entry) {
+            return PAA.find(function (paa_entry) { return paa_entry.PACKET_SESSION_CONTEXT = entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.DEACT_STATUS != "1"; });
+        });
+        //if (filter.area) {
+        //    PAC = PAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //    PAD = PAD.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        return { PACKET_DATA_SETUP_ATTEMPT: PAA.length, PACKET_DATA_SETUP_SUCCESS: PAC.length, PACKET_DATA_DROP: PAD.length };
+    };
+    NemoParameterGrid.prototype.nemo_data_server_setup = function (data, filter) {
+        var _this = this;
+        if (!data.DAA)
+            throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.DAC)
+            throw console.error('DAC is not decoded while parsing logfile. Consider update decoder field.');
+        //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DAA
+        var DAA = data.DAA;
+        var DAC = data.DAC.filter(function (entry) {
+            return DAA.find(function (daa_entry) { return daa_entry.DATA_CONTEXT == entry.DATA_CONTEXT && daa_entry.file == entry.file; });
+        });
+        var DATA_SETUP_TIME = DAC.reduce(function (acc, cur) {
+            var end = _this.GetEpochTime(cur.TIME);
+            var start = _this.GetEpochTime(DAA.find(function (entry) { return entry.DATA_CONTEXT == cur.DATA_CONTEXT && entry.file == cur.file; }).TIME);
+            return acc.concat([end - start]);
+        }, []);
+        //if (filter.area) {
+        //    DAC = DAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        return { DATA_CONNECT_ATTEMPT: DAA.length, DATA_CONNECT_SUCCESS: DAC.length, DATA_SETUP_TIME: DATA_SETUP_TIME };
+    };
+    NemoParameterGrid.prototype.nemo_tracking_area_update = function (data, filter) {
+        if (!data.TUA)
+            throw console.error('TUA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.TUS)
+            throw console.error('TUS is not decoded while parsing logfile. Consider update decoder field.');
+        //let TUA = filter.area ? data.TUA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.TUA
+        var TUA = data.TUA;
+        var TUS = data.TUS.filter(function (entry) {
+            return TUA.find(function (tua_entry) { return tua_entry.TAU_CONTEXT == entry.TAU_CONTEXT && tua_entry.file == entry.file; });
+        });
+        //if (filter.area) {
+        //    TUS = TUS.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        return { TRACKING_AREA_UPDATE_ATTEMPT: TUA.length, TRACKING_AREA_UPDATE_SUCCESS: TUS.length };
+    };
+    NemoParameterGrid.prototype.nemo_pdsch_bler = function (data, filter) {
+        if (!data.PHRATE)
+            throw console.error('PHRATE is not decoded while parsing logfile. Consider update decoder field.');
+        var PHRATE = data.PHRATE.filter(function (entry) { return entry.BLER != '' && entry.CELLTYPE == '0'; });
+        //if (filter.area) {
+        //    PHRATE = PHRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
+        //}
+        return { PDSCH_BLER: PHRATE.filter(function (entry) { return entry.CELLTYPE == "0" && entry.BLER != ''; }).map(function (x) { return parseFloat(x.BLER); }) };
+    };
+    NemoParameterGrid.prototype.nemo_mos_quality = function (data, filter) {
+        if (!data.AQDL)
+            throw console.error('AQDL is not decoded while parsing logfile. Consider update decoder field.');
+        //let AQDL = filter.area? data.AQDL.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.AQDL
+        var AQDL = data.AQDL;
+        //console.table(AQDL)
+        //filter POQLA NB
+        AQDL = AQDL.filter(function (entry) { return entry.AUDIOTYPE == '7'; });
+        return { AQDL: AQDL.map(function (entry) { return parseFloat(entry.MOS); }) };
     };
     return NemoParameterGrid;
 }());

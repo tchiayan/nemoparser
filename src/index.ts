@@ -280,7 +280,9 @@ export class NemoParser {
         
         return Observable.create((observer)=>{
             let subFunction = (data:ParseLogfileStatus) => {
+                //console.log(data)
                 if(data.status == 'OK'){
+                    observer.next({status:'CALCULATING'})
                     let result = {}
                     for(let param of nemo_params){
                         switch(param){
@@ -328,10 +330,10 @@ export class NemoParser {
                                 break;
                         }
                     }
-                    observer.next(result)
+                    observer.next({status:'OK',result:result})
                     observer.complete()
                 }else if(data.status == 'PROGRESS'){
-    
+                    observer.next({status:'PARSING',progress:data.progress})
                 }else{
                     observer.error()
                     return "ERROR!"
