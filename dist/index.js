@@ -227,7 +227,13 @@ var NemoParser = /** @class */ (function () {
                     if (!('OFDMSCAN' in extraction))
                         extraction['OFDMSCAN'] = DECODER.LTE_TDD_SCANNER;
                     break;
-                case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
+                case 'LTE_TDD_UE_MEASUREMENT':
+                    if (!('CELLMEAS' in extraction))
+                        extraction['CELLMEAS'] = DECODER.UE_LTE_TDD_CELLMEAS;
+                    if (!('CI' in extraction))
+                        extraction['CI'] = DECODER.UE_LTE_TDD_CI;
+                    break;
+                case 'APPLICATION_THROUGHPUT_DOWNLINK':
                     if (!('DRATE' in extraction))
                         extraction['DRATE'] = DECODER.DRATE_DL;
                     if (!('CI' in extraction))
@@ -328,7 +334,10 @@ var NemoParser = /** @class */ (function () {
                             case 'LTE_TDD_SCANNER_MEASUREMENT':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement(data.result, opts);
                                 break;
-                            case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
+                            case 'LTE_TDD_UE_MEASUREMENT':
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_ue_measurement(data.result, opts);
+                                break;
+                            case 'APPLICATION_THROUGHPUT_DOWNLINK':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result, opts);
                                 break;
                             case 'APPLICATION_THROUGHPUT_UPLINK':
@@ -363,6 +372,9 @@ var NemoParser = /** @class */ (function () {
                                 break;
                             case 'PDSCH_BLER':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_pdsch_bler(data.result, opts);
+                                break;
+                            case 'AUDIO_QUALITY_MOS':
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_mos_quality(data.result, opts);
                                 break;
                         }
                     }

@@ -7,10 +7,7 @@ export declare class NemoParameterGrid {
         'SCANNER_CINR': any[];
         'SCANNER_RSRQ': any[];
     };
-    nemo_application_throughput_downlink_filter_sinr(data: any, opts: any): {
-        DL_TP: any;
-        DL_TP_SNR: any[];
-    };
+    nemo_application_throughput_downlink_filter_sinr(data: any, opts: any): any;
     nemo_application_throughput_uplink(data: any, opts: any): {
         UL_TP: any;
     };
@@ -50,6 +47,10 @@ export declare class NemoParameterGrid {
         PDSCH_BLER: any;
     };
     nemo_mos_quality(data: any, opts: any): {
-        AQDL: any;
+        MOS_QUALITY: any;
+    };
+    nemo_ue_measurement(data: any, opts: any): {
+        "RSRP_RSRQ": any;
+        "SINR": any;
     };
 }

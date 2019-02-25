@@ -143,7 +143,6 @@ var NemoParameterGrid = /** @class */ (function () {
             throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.DCOMP)
             throw console.error('DCOMP is not decoded while parsing logfile. Consider update decoder field.');
-        var sinr_value = opts.sinr_value;
         data.DRATE = data.DRATE.map(function (entry) { return __assign({}, entry, { ETIME: _this.GetEpochTime(entry.TIME) }); });
         var file_list = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
         var temp_DRATE = [];
@@ -182,7 +181,9 @@ var NemoParameterGrid = /** @class */ (function () {
         data.DRATE = data.DRATE.filter(function (entry) { return !entry.duplicate; });
         //data.DRATE.sort((a, b) => b.ETIME - a.ETIME)
         var DL_SNR = [];
-        if (data.CI) {
+        var extras_result = {};
+        if (data.CI && ('sinr_value' in opts)) {
+            var sinr_value_1 = opts.sinr_value;
             // attach CINR to dl throughput
             //console.time("nemo_dl_snr_attach")
             //Get file list
@@ -194,10 +195,10 @@ var NemoParameterGrid = /** @class */ (function () {
                 //console.log('TEST')
                 //console.log("SINR value")
                 //console.log(data.CI)
-                if (!SINR.find(function (entry) { return entry.CINR >= sinr_value; })) {
+                if (!SINR.find(function (entry) { return entry.CINR >= sinr_value_1; })) {
                     return "continue";
                 }
-                var FIRST_PASS = SINR.find(function (entry) { return entry.CINR >= sinr_value; }).ETIME;
+                var FIRST_PASS = SINR.find(function (entry) { return entry.CINR >= sinr_value_1; }).ETIME;
                 var DRATE = data.DRATE.filter(function (entry) { return entry.file === file; }).sort(function (a, b) { return a.ETIME - b.ETIME; }).filter(function (entry) { return entry.ETIME >= FIRST_PASS; });
                 SINR = SINR.filter(function (entry) { return entry.ETIME >= DRATE[0].ETIME - 500; });
                 var SINR_CURSOR = 0;
@@ -233,7 +234,7 @@ var NemoParameterGrid = /** @class */ (function () {
                     //if(DRATE[i].TIME == '11:02:12.434'){console.table(DRATE[i])}
                     if (i == 0) {
                         DRATE[i]['CINR'] = Math.max(DLSNR[0], DLSNR[DLSNR.length - 1]);
-                        DRATE[i]['CINR_INDEX'] = DLSNR[0] >= sinr_value ? 0 : 1;
+                        DRATE[i]['CINR_INDEX'] = DLSNR[0] >= sinr_value_1 ? 0 : 1;
                     }
                     else {
                         DRATE[i]['CINR'] = Math.max(DLSNR[0], DLSNR[DLSNR.length - 1]);
@@ -261,7 +262,7 @@ var NemoParameterGrid = /** @class */ (function () {
                 DRATE[DRATE.length - 1]['CINR'] = Math.max(DLSNR1[0], DLSNR1[DLSNR1.length - 1]);
                 DRATE[DRATE.length - 1]['CINR_INDEX'] = DLSNR1.indexOf(DRATE[DRATE.length - 1]['CINR']);
                 //DL_SNR = [...DL_SNR, ...DRATE.filter(x => x.CINR >= 10).filter((x,i) => !(i===0 && x.CINR_INDEX !==0))]
-                DL_SNR = DL_SNR.concat(DRATE.filter(function (x) { return x.CINR >= sinr_value; }));
+                DL_SNR = DL_SNR.concat(DRATE.filter(function (x) { return x.CINR >= sinr_value_1; }));
                 //console.log(DL_SNR)
                 //DL_SNR = [...DL_SNR, ...DRATE]
             };
@@ -281,7 +282,10 @@ var NemoParameterGrid = /** @class */ (function () {
         //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
         //console.table(DL_SNR)
-        DL_SNR = DL_SNR.map(function (x) { return { CINR: x.CINR, DL: parseInt(x.DL), TIME: x.TIME }; });
+        if (('sinr_value' in opts)) {
+            DL_SNR = DL_SNR.map(function (x) { return { CINR: x.CINR, DL: parseInt(x.DL), TIME: x.TIME }; });
+            extras_result['DL_TP_SNR'] = DL_SNR;
+        }
         DL = DL.map(function (x) { return parseInt(x.DL); });
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000 && x.CINR >= 10).length}/${DL_SNR.filter(x => x.CINR >= 10).length}`)
@@ -289,7 +293,7 @@ var NemoParameterGrid = /** @class */ (function () {
         //let psdlmax = (Math.max(...DL) / 1000000).toFixed(2) + "Mbps"
         //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
         //console.timeEnd('nemo_application_throughput_downlink_filter_sinr')
-        return { DL_TP: DL, DL_TP_SNR: DL_SNR };
+        return __assign({ DL_TP: DL }, extras_result);
     };
     NemoParameterGrid.prototype.nemo_application_throughput_uplink = function (data, opts) {
         var _this = this;
@@ -607,7 +611,27 @@ var NemoParameterGrid = /** @class */ (function () {
         //console.table(AQDL)
         //filter POQLA NB
         AQDL = AQDL.filter(function (entry) { return entry.AUDIOTYPE == '7'; });
-        return { AQDL: AQDL.map(function (entry) { return parseFloat(entry.MOS); }) };
+        return { MOS_QUALITY: AQDL.map(function (entry) { return parseFloat(entry.MOS); }) };
+    };
+    NemoParameterGrid.prototype.nemo_ue_measurement = function (data, opts) {
+        //console.time("nemo_cell_measurement")
+        //let RSRP_RSRQ = data.CELLMEAS
+        if (!data.CELLMEAS)
+            throw console.error('CELLMEAS is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CI)
+            throw console.error('CI is not decoded while parsing logfile. Consider update decoder field.');
+        var RSRP_RSRQ = data.CELLMEAS.flatMap(function (entry) {
+            return entry.loop.map(function (meas) { return { RSRP: parseFloat(meas.RSRP), RSRQ: parseFloat(meas.RSRQ), CELLTYPE: meas.CELLTYPE, LAT: entry.LAT, LON: entry.LON, CHANNEL: entry.EARFCN, TIME: entry.TIME, FILE: entry.file }; });
+        }).filter(function (entry) { return entry.CELLTYPE == "0"; });
+        var CINR = data.CI.filter(function (entry) { return entry.CINR !== '' && entry.CELLTYPE == '0'; });
+        if ('polygon' in opts) {
+            RSRP_RSRQ = RSRP_RSRQ.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); });
+            CINR = CINR.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); });
+        }
+        CINR.forEach(function (entry) { return entry.CINR = parseFloat(entry.CINR); });
+        //console.log(RSRP_RSRQ.length,CINR.length)
+        //console.timeEnd("nemo_cell_measurement")
+        return { "RSRP_RSRQ": RSRP_RSRQ, "SINR": CINR };
     };
     return NemoParameterGrid;
 }());

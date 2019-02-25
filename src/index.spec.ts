@@ -84,7 +84,7 @@ describe('FILE PARSING TEST',() => {
         })
     })
 
-    it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER',()=>{
+    it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK',()=>{
         const directory = './server-test/logfiles/TDD_PSDL';
         let bufferArray:LogfileBuffer[] = []
 
@@ -95,7 +95,7 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0}}).subscribe((res)=>{
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0}}).subscribe((res)=>{
                 //console.log(result)
                 if(res.status === "OK"){
                     let result = res.result
@@ -125,7 +125,7 @@ describe('FILE PARSING TEST',() => {
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK'],{fileBuffer:bufferArray}).subscribe((res)=>{
                 //console.log(result)
                 if(res.status === "OK"){
                     let result = res.result
@@ -557,7 +557,7 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
         })
 
         const testClass = new NemoParser();
-            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0,polygon:JSON.parse(predictionData)}}).subscribe((res)=>{
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0,polygon:JSON.parse(predictionData)}}).subscribe((res)=>{
                 //console.log(result)
                 if(res.status === "OK"){
                     let result = res.result

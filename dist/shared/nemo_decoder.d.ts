@@ -301,3 +301,38 @@ export declare const UE_CAD: {
         'DROP_REASON': number;
     };
 };
+export declare const UE_LTE_TDD_CELLMEAS: {
+    filter: {
+        0: string;
+        3: string;
+    };
+    output: {
+        'SYSTEM': string;
+        'DEVICE': string;
+        'TIME': number;
+        'EARFCN': number;
+        loop: {
+            n: number;
+            p: number;
+            s: number;
+            c: {
+                'PCI': number;
+                'RSRP': number;
+                'RSRQ': number;
+                'EARFCN': number;
+                'CELLTYPE': number;
+            };
+        };
+    };
+};
+export declare const UE_LTE_TDD_CI: {
+    filter: {
+        0: string;
+        3: string;
+    };
+    output: {
+        'TIME': number;
+        'CINR': number;
+        "CELLTYPE": number;
+    };
+};

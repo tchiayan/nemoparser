@@ -214,7 +214,7 @@ export class NemoParser {
                     if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_TDD_CI
                     break;
                     
-                case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
+                case 'APPLICATION_THROUGHPUT_DOWNLINK':
                     if(!('DRATE' in extraction)) extraction['DRATE'] = DECODER.DRATE_DL
                     if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_CI
                     if(!('DREQ' in extraction)) extraction['DREQ'] = DECODER.UE_DATA_TRANSFER_ATTEMPT
@@ -302,7 +302,7 @@ export class NemoParser {
                             case 'LTE_TDD_UE_MEASUREMENT':
                                 result[param] = new NemoParameterGrid().nemo_ue_measurement(data.result,opts)
                                 break;
-                            case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
+                            case 'APPLICATION_THROUGHPUT_DOWNLINK':
                                 result[param] = new NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result,opts)
                                 break;
                             case 'APPLICATION_THROUGHPUT_UPLINK':
