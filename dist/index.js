@@ -315,6 +315,7 @@ var NemoParser = /** @class */ (function () {
         return rxjs_1.Observable.create(function (observer) {
             var subFunction = function (data) {
                 //console.log(data)
+                var opts = option.nemo_opts ? option.nemo_opts : {};
                 if (data.status == 'OK') {
                     observer.next({ status: 'CALCULATING' });
                     var result = {};
@@ -322,46 +323,46 @@ var NemoParser = /** @class */ (function () {
                         var param = nemo_params_2[_i];
                         switch (param) {
                             case 'LTE_FDD_SCANNER_MEASUREMENT':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement(data.result, opts);
                                 break;
                             case 'LTE_TDD_SCANNER_MEASUREMENT':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_scanner_measurement(data.result, opts);
                                 break;
                             case 'APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result, 0);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result, opts);
                                 break;
                             case 'APPLICATION_THROUGHPUT_UPLINK':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_application_throughput_uplink(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_application_throughput_uplink(data.result, opts);
                                 break;
                             case 'ATTACH_ATTEMPT':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_attach_attempt(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_attach_attempt(data.result, opts);
                                 break;
                             case 'FTP_CONNECTION_ATTEMPT':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_ftp_server_connection_attempt(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_ftp_server_connection_attempt(data.result, opts);
                                 break;
                             case 'INTRA_HANDOVER':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_intra_handover(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_intra_handover(data.result, opts);
                                 break;
                             case 'IRAT_HANDOVER':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_irat_handover(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_irat_handover(data.result, opts);
                                 break;
                             case 'VOLTE_CALL':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_volte_call(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_volte_call(data.result, opts);
                                 break;
                             case 'CSFB_CALL':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_csfb_call(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_csfb_call(data.result, opts);
                                 break;
                             case 'PDP_CONTEXT_SETUP':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_packet_data_setup(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_packet_data_setup(data.result, opts);
                                 break;
                             case 'DATA_CONNECTION_SETUP':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_data_server_setup(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_data_server_setup(data.result, opts);
                                 break;
                             case 'TRACKING_AREA_UPDATE':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_tracking_area_update(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_tracking_area_update(data.result, opts);
                                 break;
                             case 'PDSCH_BLER':
-                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_pdsch_bler(data.result);
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_pdsch_bler(data.result, opts);
                                 break;
                         }
                     }

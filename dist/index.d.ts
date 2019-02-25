@@ -14,6 +14,7 @@ export declare class NemoParser {
     private parseLogfile;
     private parseBuffer;
     displayGrid(nemo_params: string[], option: {
+        nemo_opts?: any;
         fileBuffer?: LogfileBuffer[];
         files?: FileList;
     }): Observable<any>;
