@@ -1,3 +1,6 @@
+import * as turf from '@turf/turf'
+import { polygon } from '@turf/turf';
+
 export class NemoParameterGrid {
     constructor(){}
 
@@ -89,13 +92,21 @@ export class NemoParameterGrid {
         return Date.parse(`1970-01-01T${timeString}Z`)
     }
 
-    nemo_scanner_measurement(data){
+    nemo_scanner_measurement(data,opts:any){
         //console.time("nemo_scanner_measurement")
-        //let OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
+        
         if (!data.OFDMSCAN) throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
         
+        //let OFDMSCAN = data.OFDMSCAN
+        //if('polygon' in opts){
+        //    OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
+        //}
         let OFDMSCAN = data.OFDMSCAN
-
+        if(opts){
+            OFDMSCAN = ('polygon' in opts)?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })):data.OFDMSCAN
+        }
+        
+        
         let files = Array.from(new Set(OFDMSCAN.map(entry => entry.file)))
         let RSRP:any[] = []
         let CINR:any[] = []
@@ -111,12 +122,15 @@ export class NemoParameterGrid {
         return {'SCANNER_RSRP':RSRP,'SCANNER_CINR':CINR,'SCANNER_RSRQ':RSRQ}
     }
 
-    nemo_application_throughput_downlink_filter_sinr(data,sinr_value:number){
+    nemo_application_throughput_downlink_filter_sinr(data,opts:any){
+
         //console.time("nemo_application_throughput_downlink_filter_sinr")
         if (!data.DRATE) throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CI) throw console.error('CI is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.DREQ) throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.')
         if (!data.DCOMP) throw console.error('DCOMP is not decoded while parsing logfile. Consider update decoder field.')
+
+        let sinr_value:number = opts.sinr_value;
 
         data.DRATE = data.DRATE.map(entry => { return { ...entry, ETIME: this.GetEpochTime(entry.TIME) } })
         let file_list = Array.from(new Set(data.DRATE.map(entry => entry.file)))
@@ -265,7 +279,7 @@ export class NemoParameterGrid {
         return { DL_TP:DL, DL_TP_SNR:DL_SNR }
     }
 
-    nemo_application_throughput_uplink(data, filter?: any) {
+    nemo_application_throughput_uplink(data, opts:any) {
         //shift time location
         //console.time("shiftLoc")
         if (!data.DRATE) throw console.error('DRATE is not decoded while parsing logfile. Consider update decoder field.');
@@ -305,6 +319,10 @@ export class NemoParameterGrid {
         //console.time("nemo_application_throughput_uplink")
         //let UL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
         let UL = data.DRATE
+        if(opts){  
+            UL = ('polygon' in opts)?data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })):data.DRATE
+        }
+        
         UL = UL.map(x => parseInt(x.UL))
 
         //padl max
@@ -315,26 +333,29 @@ export class NemoParameterGrid {
         return {UL_TP:  UL}
     }
 
-    nemo_attach_attempt(data, filter?: any) {
+    nemo_attach_attempt(data, opts: any) {
         
         if (!data.GAA) throw console.error('GAA is not decoded while parsing logfile. Consider update decoder field.');
 
         //let GAA = filter.area ? data.GAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.GAA
-        let GAA = data.GAA
+        //let GAA = data.GAA 
+        let GAA = ('polygon' in opts)?data.GAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })):data.GAA
+
         return { ATTACH_ATTEMPT : GAA.length }
     }
 
-    nemo_ftp_server_connection_attempt(data, filter?:any){
+    nemo_ftp_server_connection_attempt(data, opts:any){
 
         if (!data.DAA) throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
 
         //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]),filter.area, {ignoreBoundary:false})) : data.DAA
-        let DAA = data.DAA
+        //let DAA = data.DAA
+        let DAA = ('polygon' in opts)?data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })):data.DAA
+
         return { FTP_CONNECT_ATTEMPT: DAA.length }
-    
     }
 
-    nemo_intra_handover(data, filter?: any): any {
+    nemo_intra_handover(data, opts: any): any {
         //console.time("nemo_intra_handover")
         if (!data.HOA) throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.HOS) throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
@@ -345,6 +366,9 @@ export class NemoParameterGrid {
         //if (filter.area) {
         //    intra_handover_attempt = intra_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
         //}
+        if ('polygon' in opts) {
+            intra_handover_attempt = intra_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
 
         let intra_handover_success = data.HOS.filter((entry) => {
             return intra_handover_attempt.find((hoa_entry) => {
@@ -357,10 +381,15 @@ export class NemoParameterGrid {
             //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
         //}
 
+        if ('polygon' in opts) {
+            intra_handover_success = intra_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+            //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        }
+
         return { HANDOVER_SUCCESS: intra_handover_success.length, HANDOVER_ATTEMPT: intra_handover_attempt.length }
     }
 
-    nemo_irat_handover(data, filter?: any): any {
+    nemo_irat_handover(data, opts: any): any {
 
         if (!data.HOA) throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.HOS) throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
@@ -368,9 +397,12 @@ export class NemoParameterGrid {
         let irat_handover_attempt = data.HOA.filter(entry => ['904'].includes(entry.HO_TYPE))
 
         //filter HOA within the polygon if any
+        if ('polygon' in opts) {
+            irat_handover_attempt = irat_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
         //if (filter.area) {
         //    irat_handover_attempt = irat_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
-        //}
+        //} Deprecated
 
         let irat_handover_success = data.HOS.filter((entry) => {
             return irat_handover_attempt.find((hoa_entry) => {
@@ -381,12 +413,18 @@ export class NemoParameterGrid {
         //if (filter.area) {
         //    irat_handover_success = irat_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
             //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
-        //}
+        //} Deprecated
+
+        if (opts.polygon) {
+            irat_handover_success = irat_handover_success.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+            //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
+        }
+
 
         return { HANDOVER_SUCCESS: irat_handover_success.length, HANDOVER_ATTEMPT: irat_handover_attempt.length }
     }
 
-    nemo_volte_call(data,filter?:any){
+    nemo_volte_call(data,opts:any){
 
         if (!data.CAA) throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
@@ -416,6 +454,7 @@ export class NemoParameterGrid {
         })
 
         //volte_call_attempt = filter.area? volte_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : volte_call_attempt
+        volte_call_attempt = ('polygon' in opts) ? volte_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon , { ignoreBoundary: false })) : volte_call_attempt
         
         let volte_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '14' && entry.CALL_STATUS == "3").map(entry => {
             let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
@@ -424,10 +463,13 @@ export class NemoParameterGrid {
         })
         
         //volte_call_connected = filter.area? volte_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_connected
+        volte_call_connected = ('polygon' in opts)? volte_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon , {ignoreBoundary:false})) : volte_call_connected
+
 
         let volte_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1")
         
         //volte_call_drop = filter.area? volte_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : volte_call_drop
+        volte_call_drop = ('polygon' in opts) ? volte_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon , {ignoreBoundary:false})) : volte_call_drop
         
         return {
             VOLTE_CALL_ATTEMPT:volte_call_attempt,
@@ -435,7 +477,7 @@ export class NemoParameterGrid {
             VOLTE_CALL_DROP:volte_call_drop}
     }
 
-    nemo_csfb_call(data,filter?:any){
+    nemo_csfb_call(data,opts:any){
 
         if (!data.CAA) throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
@@ -464,6 +506,8 @@ export class NemoParameterGrid {
         })
 
         //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
+        csfb_call_attempt = ('polygon' in opts) ? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : csfb_call_attempt
+        
         
         let csfb_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '1' && entry.CALL_STATUS == "2").map(entry => {
             let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
@@ -472,23 +516,26 @@ export class NemoParameterGrid {
         })
         
         //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
+        csfb_call_connected = ('polygon' in opts)? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : csfb_call_connected
         
         let csfb_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1")
         
         //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
+        csfb_call_drop = ('polygon' in opts)? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : csfb_call_drop
         
         return {CSFB_CALL_ATTEMPT:csfb_call_attempt,CSFB_CALL_CONNECTED:csfb_call_connected,CSFB_CALL_DROP:csfb_call_drop}
     }
 
-    nemo_packet_data_setup(data, filter?: any) {
+    nemo_packet_data_setup(data, opts: any) {
         
         if (!data.PAA) throw console.error('PAA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.PAC) throw console.error('PAC is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.PAD) throw console.error('PAD is not decoded while parsing logfile. Consider update decoder field.');
 
         //let PAA = filter.area ? data.PAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.PAA
-        let PAA = data.PAA
-
+        //let PAA = data.PAA
+        let PAA = ('polygon' in opts) ? data.PAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.PAA
+        
         let PAC = data.PAC.filter((entry) => {
             return PAA.find((paa_entry) => paa_entry.PACKET_SESSION_CONTEXT == entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.PACKET_STATE == '2')
         })
@@ -497,6 +544,10 @@ export class NemoParameterGrid {
             return PAA.find(paa_entry => paa_entry.PACKET_SESSION_CONTEXT = entry.PACKET_SESSION_CONTEXT && paa_entry.file == entry.file && entry.DEACT_STATUS != "1")
         })
 
+        if('polygon' in opts){
+            PAC = PAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+            PAD = PAD.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
         //if (filter.area) {
         //    PAC = PAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
         //    PAD = PAD.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
@@ -505,14 +556,15 @@ export class NemoParameterGrid {
         return { PACKET_DATA_SETUP_ATTEMPT: PAA.length, PACKET_DATA_SETUP_SUCCESS: PAC.length, PACKET_DATA_DROP: PAD.length }
     }
 
-    nemo_data_server_setup(data, filter?: any) {
+    nemo_data_server_setup(data, opts: any) {
 
         if (!data.DAA) throw console.error('DAA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.DAC) throw console.error('DAC is not decoded while parsing logfile. Consider update decoder field.');
 
         //let DAA = filter.area ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DAA
-        let DAA = data.DAA
-
+        //let DAA = data.DAA
+        let DAA = ('polygon' in opts) ? data.DAA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.DAA
+        
         let DAC = data.DAC.filter((entry) => {
             return DAA.find(daa_entry => daa_entry.DATA_CONTEXT == entry.DATA_CONTEXT && daa_entry.file == entry.file)
         })
@@ -523,21 +575,22 @@ export class NemoParameterGrid {
             return [...acc, end - start]
         }, [])
 
-        //if (filter.area) {
-        //    DAC = DAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
-        //}
+        if ('polygon' in opts) {
+            DAC = DAC.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
 
         return { DATA_CONNECT_ATTEMPT: DAA.length, DATA_CONNECT_SUCCESS: DAC.length, DATA_SETUP_TIME: DATA_SETUP_TIME }
     }
 
-    nemo_tracking_area_update(data, filter?: any) {
+    nemo_tracking_area_update(data, opts: any) {
         
         if (!data.TUA) throw console.error('TUA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.TUS) throw console.error('TUS is not decoded while parsing logfile. Consider update decoder field.');
 
         //let TUA = filter.area ? data.TUA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.TUA
-        let TUA = data.TUA
-
+        //let TUA = data.TUA
+        let TUA = ('polygon' in opts)? data.TUA.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.TUA
+        
         let TUS = data.TUS.filter((entry) => {
             return TUA.find(tua_entry => tua_entry.TAU_CONTEXT == entry.TAU_CONTEXT && tua_entry.file == entry.file)
         })
@@ -545,15 +598,22 @@ export class NemoParameterGrid {
         //if (filter.area) {
         //    TUS = TUS.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
         //}
+        if ('polygon' in opts) {
+            TUS = TUS.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
 
         return { TRACKING_AREA_UPDATE_ATTEMPT: TUA.length, TRACKING_AREA_UPDATE_SUCCESS: TUS.length }
     }
 
-    nemo_pdsch_bler(data, filter?: any) {
+    nemo_pdsch_bler(data, opts: any) {
 
         if (!data.PHRATE) throw console.error('PHRATE is not decoded while parsing logfile. Consider update decoder field.');
 
         let PHRATE = data.PHRATE.filter(entry => entry.BLER != '' && entry.CELLTYPE == '0')
+
+        if ('polygon' in opts) {
+            PHRATE = PHRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
 
         //if (filter.area) {
         //    PHRATE = PHRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false }))
@@ -562,13 +622,14 @@ export class NemoParameterGrid {
         return { PDSCH_BLER: PHRATE.filter(entry=> entry.CELLTYPE == "0" && entry.BLER != '').map(x => parseFloat(x.BLER)) }
     }
     
-    nemo_mos_quality(data,filter?:any){
+    nemo_mos_quality(data,opts:any){
         
         if (!data.AQDL) throw console.error('AQDL is not decoded while parsing logfile. Consider update decoder field.');
 
         //let AQDL = filter.area? data.AQDL.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.AQDL
-        let AQDL = data.AQDL
-
+        //let AQDL = data.AQDL
+        let AQDL = ('polygon' in opts)? data.AQDL.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.AQDL
+        
         //console.table(AQDL)
         //filter POQLA NB
         AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '7')
