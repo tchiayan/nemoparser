@@ -100,12 +100,13 @@ Nemo Parameter
     }
     ```
 
-- APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER
+- APPLICATION_THROUGHPUT_DOWNLINK
     
     Optional Parameter: 
     ```
     {
-        polygon: geoJSON \\filter area
+        polygon: geoJSON, //filter area
+        sinr_value?: number, //filter dl throughput sample that SNR > sinr_value
     }
     ```
 
@@ -404,5 +405,21 @@ Nemo Parameter
             LAT: float, // degree
             LON: float, // degree
         }
+    }
+    ```
+
+- AUDIO_QUALITY_MOS
+    
+    Optional Parameter: 
+    ```
+    {
+        polygon: geoJSON \\filter area
+    }
+    ```
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        MOS_QUALITY: Array[]number
     }
     ```
