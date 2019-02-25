@@ -130,8 +130,6 @@ export class NemoParameterGrid {
         if (!data.DREQ) throw console.error('DREQ is not decoded while parsing logfile. Consider update decoder field.')
         if (!data.DCOMP) throw console.error('DCOMP is not decoded while parsing logfile. Consider update decoder field.')
 
-        let sinr_value:number = opts.sinr_value;
-
         data.DRATE = data.DRATE.map(entry => { return { ...entry, ETIME: this.GetEpochTime(entry.TIME) } })
         let file_list = Array.from(new Set(data.DRATE.map(entry => entry.file)))
         let temp_DRATE:any = []
@@ -162,7 +160,9 @@ export class NemoParameterGrid {
 
         //data.DRATE.sort((a, b) => b.ETIME - a.ETIME)
         let DL_SNR:any[] = []
-        if(data.CI){
+        let extras_result: any = {}
+        if(data.CI && ('sinr_value' in opts)){
+            let sinr_value:number = opts.sinr_value;
             // attach CINR to dl throughput
             //console.time("nemo_dl_snr_attach")
 
@@ -265,7 +265,11 @@ export class NemoParameterGrid {
         //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
         //console.table(DL_SNR)
-        DL_SNR = DL_SNR.map(x => {return {CINR:x.CINR,DL:parseInt(x.DL),TIME:x.TIME}})
+        if(('sinr_value' in opts)){
+            DL_SNR = DL_SNR.map(x => {return {CINR:x.CINR,DL:parseInt(x.DL),TIME:x.TIME}})
+            extras_result['DL_TP_SNR'] = DL_SNR
+        }
+        
         DL = DL.map(x => parseInt(x.DL))
         
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
@@ -276,7 +280,7 @@ export class NemoParameterGrid {
         //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
 
         //console.timeEnd('nemo_application_throughput_downlink_filter_sinr')
-        return { DL_TP:DL, DL_TP_SNR:DL_SNR }
+        return { DL_TP:DL, ...extras_result }
     }
 
     nemo_application_throughput_uplink(data, opts:any) {
@@ -633,7 +637,29 @@ export class NemoParameterGrid {
         //console.table(AQDL)
         //filter POQLA NB
         AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '7')
-        return {AQDL:AQDL.map(entry => parseFloat(entry.MOS))}
+        return {MOS_QUALITY:AQDL.map(entry => parseFloat(entry.MOS))}
     }
 
+    nemo_ue_measurement(data,opts:any){
+        //console.time("nemo_cell_measurement")
+        //let RSRP_RSRQ = data.CELLMEAS
+        if (!data.CELLMEAS) throw console.error('CELLMEAS is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CI) throw console.error('CI is not decoded while parsing logfile. Consider update decoder field.');
+
+        let RSRP_RSRQ = data.CELLMEAS.flatMap((entry) => {
+            return entry.loop.map((meas) => { return { RSRP: parseFloat(meas.RSRP), RSRQ: parseFloat(meas.RSRQ), CELLTYPE: meas.CELLTYPE, LAT: entry.LAT, LON: entry.LON, CHANNEL: entry.EARFCN, TIME: entry.TIME, FILE: entry.file } })
+        }).filter(entry => entry.CELLTYPE == "0")
+
+        let CINR = data.CI.filter(entry => entry.CINR !== '' && entry.CELLTYPE == '0')
+
+        if ('polygon' in opts) {
+            RSRP_RSRQ = RSRP_RSRQ.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+            CINR = CINR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
+
+        CINR.forEach(entry => entry.CINR = parseFloat(entry.CINR))
+        //console.log(RSRP_RSRQ.length,CINR.length)
+        //console.timeEnd("nemo_cell_measurement")
+        return { "RSRP_RSRQ" : RSRP_RSRQ, "SINR": CINR }
+    }
 }

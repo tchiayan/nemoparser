@@ -373,3 +373,36 @@ Nemo Parameter
         PDSCH_BLER | Array[]number 
     }
     ```
+
+- LTE_TDD_UE_MEASUREMENT
+    
+    Optional Parameter: 
+    ```
+    {
+        polygon: geoJSON \\filter area
+    }
+    ```
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        RSRP_RSRQ: Array[]{
+            RSRP: float,
+            RSRQ: float, 
+            CELLTYPE: string,
+            LAT: float, // degree
+            LON: float, // degree
+            CHANNEL: string,
+            TIME: string,
+            FILE: string,
+        },
+        SINR:{
+            TIME: string,
+            CINR: float,
+            CELLTYPE: string,
+            file: string,
+            LAT: float, // degree
+            LON: float, // degree
+        }
+    }
+    ```

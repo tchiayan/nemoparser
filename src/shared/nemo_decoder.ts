@@ -138,3 +138,19 @@ export const UE_CAD = {
   filter: {0:'CAD'},
   output: {'TIME':1, 'CALL_CONTEXT':3,'MEAS_SYSTEM':4,'CALL_TYPE':5,'DROP_REASON':6}    
 }
+
+export const UE_LTE_TDD_CELLMEAS = {
+  filter:{0:'CELLMEAS',3:'8'},
+  output:{'SYSTEM':'LTE','DEVICE':'UE','TIME':1,'EARFCN':9,loop:{
+      n:5,
+      p:9,
+      s:7,
+      c:{'PCI':3,'RSRP':5,'RSRQ':6,'EARFCN':2,'CELLTYPE':0}
+    }
+  }
+}
+
+export const  UE_LTE_TDD_CI = {
+  filter:{0:'CI',3:'8'},
+  output:{'TIME':1,'CINR':5,"CELLTYPE":6}
+}

@@ -61,6 +61,29 @@ describe('FILE PARSING TEST',() => {
             })
     })
 
+    it('LOAD TDD PSDL FILE | LTE_TDD_UE_MEASUREMENT',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_TDD_UE_MEASUREMENT'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0}}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_TDD_UE_MEASUREMENT']
+                expect(data).to.have.keys(['RSRP_RSRQ','SINR'])
+                expect(data['RSRP_RSRQ']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['SINR']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
+        })
+    })
+
     it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER',()=>{
         const directory = './server-test/logfiles/TDD_PSDL';
         let bufferArray:LogfileBuffer[] = []
@@ -86,6 +109,30 @@ describe('FILE PARSING TEST',() => {
                         expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
                         //console.log(result[i]['DL_TP'][0])
                         //console.log(result[i]['DL_TP_SNR'][0])
+                    }
+                }
+            })
+    })
+
+    it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK_NO_SINR_FILTER',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK_SINR_FILTER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+                //console.log(result)
+                if(res.status === "OK"){
+                    let result = res.result
+                    //console.log(res)
+                    for(let i of Object.keys(result)){
+                        expect(result[i]).to.have.keys(['DL_TP']).not.have.key('DL_TP_SNR')
+                        expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
                     }
                 }
             })
@@ -321,6 +368,27 @@ describe('FILE PARSING TEST',() => {
         })
     })
 
+    it('LOAD TDD VOLTE FILE | AUDIO_QUALITY_MOS',()=>{
+        const directory = './server-test/logfiles/TDD_VOLTE';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['AUDIO_QUALITY_MOS'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['AUDIO_QUALITY_MOS']
+                expect(data).to.have.keys(['MOS_QUALITY'])
+                expect(data['MOS_QUALITY']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
+        })
+    })
+
     it('LOAD TDD_CSFB FILE | CSFB_CALL',()=>{
         const directory = './server-test/logfiles/TDD_CSFB';
         let bufferArray:LogfileBuffer[] = []
@@ -452,6 +520,29 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
                 }
             }
             
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | LTE_TDD_UE_MEASUREMENT',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_TDD_UE_MEASUREMENT'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:0,polygon:JSON.parse(predictionData)}}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_TDD_UE_MEASUREMENT']
+                expect(data).to.have.keys(['RSRP_RSRQ','SINR'])
+                expect(data['RSRP_RSRQ']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['SINR']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
         })
     })
 
@@ -731,6 +822,29 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
                 expect(data['VOLTE_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
                 expect(data['VOLTE_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
                 expect(data['VOLTE_CALL_DROP']).to.be.an('array')
+            }
+        })
+    })
+
+    it('LOAD TDD VOLTE FILE | AUDIO_QUALITY_MOS',()=>{
+        const directory = './server-test/logfiles/TDD_VOLTE';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['AUDIO_QUALITY_MOS'],{fileBuffer:bufferArray,nemo_opts:{
+            polygon:JSON.parse(predictionData)
+        }}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['AUDIO_QUALITY_MOS']
+                expect(data).to.have.keys(['MOS_QUALITY'])
+                expect(data['MOS_QUALITY']).to.be.an('array').have.lengthOf.greaterThan(0)
             }
         })
     })
