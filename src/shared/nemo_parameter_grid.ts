@@ -97,15 +97,7 @@ export class NemoParameterGrid {
         
         if (!data.OFDMSCAN) throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
         
-        //let OFDMSCAN = data.OFDMSCAN
-        //if('polygon' in opts){
-        //    OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
-        //}
         let OFDMSCAN = data.OFDMSCAN
-        if(opts){
-            OFDMSCAN = ('polygon' in opts)?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })):data.OFDMSCAN
-        }
-        
         
         let files = Array.from(new Set(OFDMSCAN.map(entry => entry.file)))
         let RSRP:any[] = []
@@ -117,6 +109,10 @@ export class NemoParameterGrid {
             CINR = [...CINR,...this.nemo_scanner_field_n_best(filter_data,'CINR')]
             RSRQ = [...RSRQ,...this.nemo_scanner_field_n_best(filter_data,'RSRQ')]
         }
+
+        RSRP = ('polygon' in opts)?RSRP.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):RSRP
+        CINR = ('polygon' in opts)?CINR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):CINR
+        RSRQ = ('polygon' in opts)?RSRQ.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):RSRQ
 
         //console.timeEnd("nemo_scanner_measurement")
         return {'SCANNER_RSRP':RSRP,'SCANNER_CINR':CINR,'SCANNER_RSRQ':RSRQ}
@@ -259,8 +255,8 @@ export class NemoParameterGrid {
             //console.timeEnd("nemo_dl_snr_attach")
         }
 
-        //let DL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
-        let DL = data.DRATE
+        let DL = ('polygon' in opts) ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.DRATE
+        //let DL = data.DRATE
         //console.log(DL_SNR)
         //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))

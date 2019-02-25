@@ -106,14 +106,7 @@ var NemoParameterGrid = /** @class */ (function () {
         //console.time("nemo_scanner_measurement")
         if (!data.OFDMSCAN)
             throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
-        //let OFDMSCAN = data.OFDMSCAN
-        //if('polygon' in opts){
-        //    OFDMSCAN = filter.area?data.OFDMSCAN.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })):data.OFDMSCAN
-        //}
         var OFDMSCAN = data.OFDMSCAN;
-        if (opts) {
-            OFDMSCAN = ('polygon' in opts) ? data.OFDMSCAN.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : data.OFDMSCAN;
-        }
         var files = Array.from(new Set(OFDMSCAN.map(function (entry) { return entry.file; })));
         var RSRP = [];
         var CINR = [];
@@ -129,6 +122,9 @@ var NemoParameterGrid = /** @class */ (function () {
             var file = files_1[_i];
             _loop_1(file);
         }
+        RSRP = ('polygon' in opts) ? RSRP.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true }); }) : RSRP;
+        CINR = ('polygon' in opts) ? CINR.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true }); }) : CINR;
+        RSRQ = ('polygon' in opts) ? RSRQ.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true }); }) : RSRQ;
         //console.timeEnd("nemo_scanner_measurement")
         return { 'SCANNER_RSRP': RSRP, 'SCANNER_CINR': CINR, 'SCANNER_RSRQ': RSRQ };
     };
@@ -276,8 +272,8 @@ var NemoParameterGrid = /** @class */ (function () {
             //console.table(CINR)
             //console.timeEnd("nemo_dl_snr_attach")
         }
-        //let DL = filter.area ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : data.DRATE
-        var DL = data.DRATE;
+        var DL = ('polygon' in opts) ? data.DRATE.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : data.DRATE;
+        //let DL = data.DRATE
         //console.log(DL_SNR)
         //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
