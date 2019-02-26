@@ -177,8 +177,14 @@ export class NemoParameterGrid {
                 if(!SINR.find(entry => entry.CINR >= sinr_value)){
                     continue;
                 }
+                //console.log(SINR.find(entry => entry.CINR >= sinr_value))
                 let FIRST_PASS = SINR.find(entry => entry.CINR >= sinr_value).ETIME
+                //console.log(FIRST_PASS)
                 const DRATE = data.DRATE.filter(entry => entry.file === file).sort((a,b) => a.ETIME - b.ETIME).filter(entry => entry.ETIME >= FIRST_PASS)
+                //console.log(DRATE[0])
+                if(DRATE.length === 0){
+                    continue;
+                }
                 SINR = SINR.filter(entry => entry.ETIME >= DRATE[0].ETIME - 500)
 
                 let SINR_CURSOR = 0
@@ -256,9 +262,7 @@ export class NemoParameterGrid {
         }
 
         let DL = ('polygon' in opts) ? data.DRATE.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.DRATE
-        //let DL = data.DRATE
-        //console.log(DL_SNR)
-        //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
+        DL_SNR = ('polygon' in opts) ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : DL_SNR
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
         //console.table(DL_SNR)
         if(('sinr_value' in opts)){
@@ -441,8 +445,8 @@ export class NemoParameterGrid {
         }).filter(entry =>{ 
             //console.table(entry)
             if(!entry.terminated){
-                throw console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
-                //return false
+                console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                return false
             }else if(!(entry.terminated.CALL_TYPE == '14')){
                 return false
             }
@@ -494,7 +498,7 @@ export class NemoParameterGrid {
         }).filter(entry =>{ 
             //console.table(entry)
             if(!entry.terminated){
-                console.log(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
                 return false
             }else if(!(entry.terminated.CALL_TYPE == '1')){
                 return false

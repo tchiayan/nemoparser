@@ -3,9 +3,56 @@ import { readFileSync, readdirSync,writeFileSync, write } from 'fs'
 import { expect } from 'chai'
 
 
-const jsdom = require("jsdom")
-const { JSDOM } = jsdom
+describe("DEBUG FAIZ PSDL LONG",()=>{
+    it('LOAD TDD PSDL FILE | LTE_TDD_UE_MEASUREMENT',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL_FAIZ';
+        let bufferArray:LogfileBuffer[] = []
 
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_TDD_UE_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_TDD_UE_MEASUREMENT']
+                expect(data).to.have.keys(['RSRP_RSRQ','SINR'])
+                expect(data['RSRP_RSRQ']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['SINR']).to.be.an('array').have.lengthOf.greaterThan(0)
+            }
+        })
+    })
+
+    it('LOAD TDD PSDL FILE | APPLICATION_THROUGHPUT_DOWNLINK',()=>{
+        const directory = './server-test/logfiles/TDD_PSDL_FAIZ';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['APPLICATION_THROUGHPUT_DOWNLINK'],{fileBuffer:bufferArray,nemo_opts:{sinr_value:10}}).subscribe((res)=>{
+                //console.log(result)
+                if(res.status === "OK"){
+                    let result = res.result
+                    //console.log(res)
+                    for(let i of Object.keys(result)){
+                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                        expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
+                        expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf(0)
+                    }
+                }
+            })
+    })
+
+})
 
 describe('FUNCTION RESPONSE TEST',()=>{
     

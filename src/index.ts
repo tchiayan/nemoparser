@@ -105,6 +105,9 @@ export class NemoParser {
                 let reader = new FileReader()
                 reader.onload = (log) => {
                     let lines = (reader.result as String).split("\n")
+                    if(!(lines[lines.length-2].split(",")[0]==='#HASH' || lines[lines.length-1].split(",")[0]==='#HASH')){
+                        console.warn("File invalid:", f.name)
+                    }
                     let GPS_RESULT = { LAT: 0, LON: 0 }
                     for (let j = 0, r; r = lines[j]; j++) {
                         let columns = r.split(",")
@@ -156,6 +159,9 @@ export class NemoParser {
             for(let _buffer of buffers){
                 let lines = _buffer.data.split("\n")
                 let GPS_RESULT = { LAT: 0, LON: 0 }
+                if(!(lines[lines.length-2].split(",")[0]==='#HASH' || lines[lines.length-1].split(",")[0]==='#HASH')){
+                    console.warn("File invalid:", _buffer.filename)
+                }
                 for (let j = 0, r; r = lines[j]; j++) {
                     let columns = r.split(",")
                     //console.log(columns)

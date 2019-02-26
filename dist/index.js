@@ -114,6 +114,9 @@ var NemoParser = /** @class */ (function () {
                 var reader = new FileReader();
                 reader.onload = function (log) {
                     var lines = reader.result.split("\n");
+                    if (!(lines[lines.length - 2].split(",")[0] === '#HASH' || lines[lines.length - 1].split(",")[0] === '#HASH')) {
+                        console.warn("File invalid:", f.name);
+                    }
                     var GPS_RESULT = { LAT: 0, LON: 0 };
                     for (var j = 0, r = void 0; r = lines[j]; j++) {
                         var columns = r.split(",");
@@ -171,6 +174,9 @@ var NemoParser = /** @class */ (function () {
                 var _buffer = buffers_1[_i];
                 var lines = _buffer.data.split("\n");
                 var GPS_RESULT = { LAT: 0, LON: 0 };
+                if (!(lines[lines.length - 2].split(",")[0] === '#HASH' || lines[lines.length - 1].split(",")[0] === '#HASH')) {
+                    console.warn("File invalid:", _buffer.filename);
+                }
                 for (var j = 0, r = void 0; r = lines[j]; j++) {
                     var columns = r.split(",");
                     //console.log(columns)

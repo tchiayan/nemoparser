@@ -194,8 +194,14 @@ var NemoParameterGrid = /** @class */ (function () {
                 if (!SINR.find(function (entry) { return entry.CINR >= sinr_value_1; })) {
                     return "continue";
                 }
+                //console.log(SINR.find(entry => entry.CINR >= sinr_value))
                 var FIRST_PASS = SINR.find(function (entry) { return entry.CINR >= sinr_value_1; }).ETIME;
+                //console.log(FIRST_PASS)
                 var DRATE = data.DRATE.filter(function (entry) { return entry.file === file; }).sort(function (a, b) { return a.ETIME - b.ETIME; }).filter(function (entry) { return entry.ETIME >= FIRST_PASS; });
+                //console.log(DRATE[0])
+                if (DRATE.length === 0) {
+                    return "continue";
+                }
                 SINR = SINR.filter(function (entry) { return entry.ETIME >= DRATE[0].ETIME - 500; });
                 var SINR_CURSOR = 0;
                 //console.log(DRATE)
@@ -273,9 +279,7 @@ var NemoParameterGrid = /** @class */ (function () {
             //console.timeEnd("nemo_dl_snr_attach")
         }
         var DL = ('polygon' in opts) ? data.DRATE.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : data.DRATE;
-        //let DL = data.DRATE
-        //console.log(DL_SNR)
-        //DL_SNR = filter.area ? DL_SNR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : DL_SNR
+        DL_SNR = ('polygon' in opts) ? DL_SNR.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : DL_SNR;
         //console.table(DL_SNR.filter(x => x.CINR >= 10 && !(x.INDEX===0 && x.CINR_INDEX ===0 )))
         //console.table(DL_SNR)
         if (('sinr_value' in opts)) {
@@ -441,8 +445,8 @@ var NemoParameterGrid = /** @class */ (function () {
         }).filter(function (entry) {
             //console.table(entry)
             if (!entry.terminated) {
-                throw console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
-                //return false
+                console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
+                return false;
             }
             else if (!(entry.terminated.CALL_TYPE == '14')) {
                 return false;
@@ -492,7 +496,7 @@ var NemoParameterGrid = /** @class */ (function () {
         }).filter(function (entry) {
             //console.table(entry)
             if (!entry.terminated) {
-                console.log("terminating call not found possiblity logfile error FILE:" + entry.file);
+                console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
                 return false;
             }
             else if (!(entry.terminated.CALL_TYPE == '1')) {
