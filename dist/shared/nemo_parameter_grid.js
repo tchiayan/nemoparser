@@ -445,7 +445,7 @@ var NemoParameterGrid = /** @class */ (function () {
         }).filter(function (entry) {
             //console.table(entry)
             if (!entry.terminated) {
-                console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
+                console.warn("terminating call not found possiblity logfile error FILE:" + entry.file);
                 return false;
             }
             else if (!(entry.terminated.CALL_TYPE == '14')) {
@@ -496,7 +496,7 @@ var NemoParameterGrid = /** @class */ (function () {
         }).filter(function (entry) {
             //console.table(entry)
             if (!entry.terminated) {
-                console.error("terminating call not found possiblity logfile error FILE:" + entry.file);
+                console.warn("terminating call not found possiblity logfile error FILE:" + entry.file);
                 return false;
             }
             else if (!(entry.terminated.CALL_TYPE == '1')) {

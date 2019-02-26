@@ -445,7 +445,7 @@ export class NemoParameterGrid {
         }).filter(entry =>{ 
             //console.table(entry)
             if(!entry.terminated){
-                console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
                 return false
             }else if(!(entry.terminated.CALL_TYPE == '14')){
                 return false
@@ -498,7 +498,7 @@ export class NemoParameterGrid {
         }).filter(entry =>{ 
             //console.table(entry)
             if(!entry.terminated){
-                console.error(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
                 return false
             }else if(!(entry.terminated.CALL_TYPE == '1')){
                 return false
