@@ -461,6 +461,31 @@ describe('FILE PARSING TEST',() => {
 
 })
 
+describe('DTAC FDD KPI TEST',()=>{
+    it('LOAD TDD_CSFB_FULL FILE | CSFB_CALL',()=>{
+        const directory = './server-test/logfiles/TDD_CSFB_FULL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['CSFB_CALL'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['CSFB_CALL']
+                console.log(`ATTEMPT: ${data['CSFB_CALL_ATTEMPT'].length} | CONNECTED: ${data['CSFB_CALL_CONNECTED'].length} | DROP: ${data['CSFB_CALL_DROP'].length}`)
+                expect(data).to.have.keys(['CSFB_CALL_ATTEMPT','CSFB_CALL_CONNECTED','CSFB_CALL_DROP'])
+                expect(data['CSFB_CALL_ATTEMPT']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['CSFB_CALL_CONNECTED']).to.be.an('array').have.lengthOf.greaterThan(0)
+                expect(data['CSFB_CALL_DROP']).to.be.an('array')
+            }
+        })
+    })
+})
 /*describe('FUNCTIONALITY/KPI TEST',()=>{
     
     it('LTE_FDD_SCANNER_MEASUREMENT TEST',()=>{

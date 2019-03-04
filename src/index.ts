@@ -160,7 +160,7 @@ export class NemoParser {
                 let lines = _buffer.data.split("\n")
                 let GPS_RESULT = { LAT: 0, LON: 0 }
                 if(!(lines[lines.length-2].split(",")[0]==='#HASH' || lines[lines.length-1].split(",")[0]==='#HASH')){
-                    console.warn("File invalid:", _buffer.filename)
+                    //console.warn("File invalid:", _buffer.filename)
                 }
                 for (let j = 0, r; r = lines[j]; j++) {
                     let columns = r.split(",")
