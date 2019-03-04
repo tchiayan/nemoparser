@@ -490,7 +490,8 @@ export class NemoParameterGrid {
 
         //console.time("nemo_csfb_call")
         let csfb_call_attempt = data.CAA.map(entry => {
-            let terminated_call = data.CAC.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            //console.log(data.CAC.filter(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file))
+            let terminated_call = data.CAC.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file && call.CALL_STATUS === '2')
             if(!terminated_call){
                 terminated_call = data.CAF.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
             }
@@ -498,22 +499,35 @@ export class NemoParameterGrid {
         }).filter(entry =>{ 
             //console.table(entry)
             if(!entry.terminated){
-                console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                //console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
                 return false
             }else if(!(entry.terminated.CALL_TYPE == '1')){
                 return false
             }
             if('FAIL' in entry.terminated){
-                if(entry.terminated.FAIL == '5'){return false}
+                if(entry.terminated.FAIL == '5' || entry.terminated.FAIL == '1' || entry.terminated.FAIL == '2'){return false}
             }
             return true
+        }).filter((entry) =>{ // filter only LTE system at start of the call
+            if(entry.MEAS_SYSTEM === '7' || entry.MEAS_SYSTEM === '8'){
+                return true
+            }else{
+                return false
+            }
         })
 
         //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
         csfb_call_attempt = ('polygon' in opts) ? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : csfb_call_attempt
         
         
-        let csfb_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '1' && entry.CALL_STATUS == "2").map(entry => {
+        let csfb_call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '1' && entry.CALL_STATUS == "3").filter((entry)=>{
+            let CAA = data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            if(CAA.MEAS_SYSTEM === '7' || CAA.MEAS_SYSTEM === '8'){
+                return true
+            }else{
+                return false
+            }
+        }).map(entry => {
             let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
             let end_time = this.GetEpochTime(entry.TIME)
             return {...entry,SETUP_TIME:end_time-start_time}
@@ -522,8 +536,7 @@ export class NemoParameterGrid {
         //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
         csfb_call_connected = ('polygon' in opts)? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : csfb_call_connected
         
-        let csfb_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1")
-        
+        let csfb_call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1" && entry.DROP_REASON != "2")
         //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
         csfb_call_drop = ('polygon' in opts)? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : csfb_call_drop
         

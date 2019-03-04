@@ -488,7 +488,8 @@ var NemoParameterGrid = /** @class */ (function () {
             throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
         //console.time("nemo_csfb_call")
         var csfb_call_attempt = data.CAA.map(function (entry) {
-            var terminated_call = data.CAC.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            //console.log(data.CAC.filter(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file))
+            var terminated_call = data.CAC.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file && call.CALL_STATUS === '2'; });
             if (!terminated_call) {
                 terminated_call = data.CAF.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
             }
@@ -496,29 +497,44 @@ var NemoParameterGrid = /** @class */ (function () {
         }).filter(function (entry) {
             //console.table(entry)
             if (!entry.terminated) {
-                console.warn("terminating call not found possiblity logfile error FILE:" + entry.file);
+                //console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
                 return false;
             }
             else if (!(entry.terminated.CALL_TYPE == '1')) {
                 return false;
             }
             if ('FAIL' in entry.terminated) {
-                if (entry.terminated.FAIL == '5') {
+                if (entry.terminated.FAIL == '5' || entry.terminated.FAIL == '1' || entry.terminated.FAIL == '2') {
                     return false;
                 }
             }
             return true;
+        }).filter(function (entry) {
+            if (entry.MEAS_SYSTEM === '7' || entry.MEAS_SYSTEM === '8') {
+                return true;
+            }
+            else {
+                return false;
+            }
         });
         //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
         csfb_call_attempt = ('polygon' in opts) ? csfb_call_attempt.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : csfb_call_attempt;
-        var csfb_call_connected = data.CAC.filter(function (entry) { return entry.CALL_TYPE == '1' && entry.CALL_STATUS == "2"; }).map(function (entry) {
+        var csfb_call_connected = data.CAC.filter(function (entry) { return entry.CALL_TYPE == '1' && entry.CALL_STATUS == "3"; }).filter(function (entry) {
+            var CAA = data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            if (CAA.MEAS_SYSTEM === '7' || CAA.MEAS_SYSTEM === '8') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }).map(function (entry) {
             var start_time = _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
             var end_time = _this.GetEpochTime(entry.TIME);
             return __assign({}, entry, { SETUP_TIME: end_time - start_time });
         });
         //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
         csfb_call_connected = ('polygon' in opts) ? csfb_call_connected.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : csfb_call_connected;
-        var csfb_call_drop = data.CAD.filter(function (entry) { return entry.DROP_REASON != "1"; });
+        var csfb_call_drop = data.CAD.filter(function (entry) { return entry.DROP_REASON != "1" && entry.DROP_REASON != "2"; });
         //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
         csfb_call_drop = ('polygon' in opts) ? csfb_call_drop.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : csfb_call_drop;
         return { CSFB_CALL_ATTEMPT: csfb_call_attempt, CSFB_CALL_CONNECTED: csfb_call_connected, CSFB_CALL_DROP: csfb_call_drop };
