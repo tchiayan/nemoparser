@@ -1,5 +1,5 @@
 export const LTE_FDD_SCANNER = {
-    filter:{0:'OFDMSCAN',3:'7',6:'1',10:{condition:'>0'}},
+    filter:{0:'OFDMSCAN',3:'7',6:'1'},
     output:{'SYSTEM':'LTE','DEVICE':'SCANNER','TIME':1,'EARFCN':5,loop:{n:10,p:10,s:12,c:{
       'PCI':0,
       'RSRP':3,
@@ -24,7 +24,7 @@ export const UMTS_SCANNER = {
       n:9,
       p:6,
       s:11,
-      c:{'PCI':0,'RSRP':2,'CINR':1}
+      c:{'SC':0,'RSCP':2,'ECNO':1}
     }}
 }
 
@@ -40,11 +40,6 @@ export const DRATE_UL = {
 
 export const UE_LTE_CI = {
   filter:{0:'CI'},
-  output:{'TIME':1,'CINR':5,"CELLTYPE":6}
-}
-
-export const UE_LTE_FDD_CI = {
-  filter:{0:'CI',3:'7'},
   output:{'TIME':1,'CINR':5,"CELLTYPE":6}
 }
 
@@ -150,7 +145,44 @@ export const UE_LTE_TDD_CELLMEAS = {
   }
 }
 
+export const UE_LTE_FDD_CELLMEAS = {
+  filter:{0:'CELLMEAS',3:'7'},
+  output:{'SYSTEM':'LTE','DEVICE':'UE','TIME':1,'EARFCN':9,loop:{
+      n:5,
+      p:9,
+      s:7,
+      c:{'PCI':3,'RSRP':5,'RSRQ':6,'EARFCN':2,'CELLTYPE':0}
+    }
+  }
+}
+
+export const UE_UMTS_CELLMEAS = {
+  filter:{0:'CELLMEAS', 3:'5'},
+  output: {'SYSTEM':'UMTS','DEVICE':'UE','TIME':1,loop:{
+      n:{s:7,p:6,n:5},
+      p:17,
+      s:{},
+      c:{'CELLTYPE':0,'CH':2,'SC':3,'ECNO':4,'RSCP':6}
+    }
+  }
+}
+
 export const  UE_LTE_TDD_CI = {
   filter:{0:'CI',3:'8'},
   output:{'TIME':1,'CINR':5,"CELLTYPE":6}
+}
+
+export const UE_LTE_FDD_CI = {
+  filter:{0:'CI',3:'7'},
+  output:{'TIME':1,'CINR':5,"CELLTYPE":6}
+}
+
+export const UE_L3SM = {
+  filter:{0:'L3SM'},
+  output:{'TIME':1,'MEAS_SYSTEM':3,'MESSAGE':5}
+}
+
+export const UE_RLC_BLER = {
+  filter: {0:'RLCBLER'},
+  output: {'TIME':1, 'BLER':4}
 }

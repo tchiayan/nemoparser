@@ -5,6 +5,7 @@ export class NemoParameterGrid {
     constructor(){}
 
     private nemo_scanner_field_n_best(data,field:string):any[]{
+        
         let rfield = data.map((entry,index,array)=>{
             //let empty_field = {}
             //empty_field[field] = ''
@@ -21,28 +22,47 @@ export class NemoParameterGrid {
                     }).sort((a,b)=>b[field] - a[field])[0]
                     top_field[field] = top_meas[field]
                 }
+            }else{
+                /*if(index - CH_COUNT >= 0){
+                    if(array[index-CH_COUNT].loop.length !== 0){
+                        let top_list = array[index-CH_COUNT].loop.filter((meas)=>meas[field] !== '')
+                        if(top_list.length !==0){
+                            let top_meas = top_list.map((meas)=>{
+                                let temp = {}
+                                temp[field] = parseFloat(meas[field])
+                                return temp
+                            }).sort((a,b)=>b[field] - a[field])[0]
+                            top_field[field] = top_meas[field]
+                        }
+                    }else{
+                        console.log(`Empty loop: ${entry.EARFCN} FILE: ${entry.file}`)
+                    }
+                }else{
+                    console.log(`No early loop: ${entry.EARFCN} FILE: ${entry.file}`)
+                }*/
             }
-            /*let top_field = entry.loop.length!==0?entry.loop.filter((meas)=>meas[field] !== '')
-                .map((meas)=>{
-                    let temp = {}
-                    temp[field] = parseFloat(meas[field])
-                    return temp
-                }).sort((a,b)=>b[field] - a[field])[0]:empty_field*/
             return {...top_field,
                 TIME:entry.TIME,CH:entry.EARFCN,file:entry.file,LAT:entry.LAT,LON:entry.LON}
-        }).map((entry,index,array)=>{ // replace empty value
+        })
+        
+        const CH_COUNT = Array.from(new Set(data.map(entry => entry.EARFCN))).length
+        //console.log(CH_COUNT)
+
+        rfield = CH_COUNT === 1? rfield: rfield.map((entry,index,array)=>{ // replace empty value
             if(entry[field] !== ''){
                 return entry
             }else{
                 let ch = entry.CH
                 let i = --index
-                while(array[i].CH !== ch){--i;}
+                while(array[i].CH !== ch && i >= 0){i--;if(i < 0) break;}
+                if(i < 0) return entry
                 let new_entry = {...entry}
                 new_entry[field] = array[i][field]
                 return new_entry
             }
-            
-        }).filter(entry => entry[field] !== "").map((entry,index,array)=>{
+        })
+        
+        rfield = rfield.filter(entry => entry[field] !== "").map((entry,index,array)=>{
             if(index!==array.length-1){
                 if(entry.TIME == array[index+1].TIME){
                     if(array[index+1][field] < entry[field])
@@ -92,7 +112,7 @@ export class NemoParameterGrid {
         return Date.parse(`1970-01-01T${timeString}Z`)
     }
 
-    nemo_scanner_measurement(data,opts:any){
+    nemo_lte_scanner_measurement(data,opts:any){
         //console.time("nemo_scanner_measurement")
         
         if (!data.OFDMSCAN) throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
@@ -105,6 +125,10 @@ export class NemoParameterGrid {
         let RSRQ:any[] = []
         for(let file of files){
             let filter_data = data.OFDMSCAN.filter((entry) => entry.file == file)
+
+            /* filter channel */
+            filter_data = ('filter_channel' in opts)? filter_data.filter((entry)=>opts.filter_channel.includes(entry.EARFCN)) : filter_data
+
             RSRP = [...RSRP,...this.nemo_scanner_field_n_best(filter_data,'RSRP')]
             CINR = [...CINR,...this.nemo_scanner_field_n_best(filter_data,'CINR')]
             RSRQ = [...RSRQ,...this.nemo_scanner_field_n_best(filter_data,'RSRQ')]
@@ -116,6 +140,33 @@ export class NemoParameterGrid {
 
         //console.timeEnd("nemo_scanner_measurement")
         return {'SCANNER_RSRP':RSRP,'SCANNER_CINR':CINR,'SCANNER_RSRQ':RSRQ}
+    }
+
+    nemo_umts_scanner_measurement(data,opts:any){
+        //console.time("nemo_scanner_measurement")
+        
+        if (!data.PILOTSCAN) throw console.error('PILOTSCAN is not decoded while parsing logfile. Consider update decoder field.');
+        
+        let PILOTSCAN = data.PILOTSCAN
+        
+        let files = Array.from(new Set(PILOTSCAN.map(entry => entry.file)))
+        let RSCP:any[] = []
+        let ECNO:any[] = []
+        for(let file of files){
+            let filter_data = data.PILOTSCAN.filter((entry) => entry.file == file)
+
+            /* filter channel */
+            filter_data = ('filter_channel' in opts)? filter_data.filter((entry)=>opts.filter_channel.includes(entry.EARFCN)) : filter_data
+
+            RSCP = [...RSCP,...this.nemo_scanner_field_n_best(filter_data,'RSCP')]
+            ECNO = [...ECNO,...this.nemo_scanner_field_n_best(filter_data,'ECNO')]
+        }
+
+        RSCP = ('polygon' in opts)?RSCP.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):RSCP
+        ECNO = ('polygon' in opts)?ECNO.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):ECNO
+
+        //console.timeEnd("nemo_scanner_measurement")
+        return {'SCANNER_RSCP':RSCP,'SCANNER_ECNO':ECNO}
     }
 
     nemo_application_throughput_downlink_filter_sinr(data,opts:any){
@@ -487,6 +538,7 @@ export class NemoParameterGrid {
         if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CAF) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CAD) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.L3SM) throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
 
         //console.time("nemo_csfb_call")
         let csfb_call_attempt = data.CAA.map(entry => {
@@ -528,7 +580,23 @@ export class NemoParameterGrid {
                 return false
             }
         }).map(entry => {
-            let start_time = this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
+            // call setup calculation for MTC is different from MOC
+            // csfb_setup_time = CAC - 'CS_SERVICE_NOTIFICATION'  # if L3SM "CS_SERVICE_NOTIFICATION" exist
+            // --- else ---
+            // csfb_setup_time = CAC - CAA
+            const CAA = data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            const LAST_CAA = [...data.CAC]
+                .sort((a,b)=>{return  this.GetEpochTime(a.TIME)- this.GetEpochTime(b.TIME)}) // descending sort time latest time first 
+                .find(call => this.GetEpochTime(call.TIME) <= this.GetEpochTime(CAA.TIME) && call.file == entry.file )
+            let L3SM = null
+            if(!LAST_CAA){
+                L3SM = data.L3SM.filter(l3=>l3.file == entry.file)
+                    .find(l3 => (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && this.GetEpochTime(CAA.TIME) >= this.GetEpochTime(l3.TIME))
+            }else{
+                L3SM = data.L3SM.filter(l3=>l3.file == entry.file)
+                    .find(l3 => (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && this.GetEpochTime(CAA.TIME) >= this.GetEpochTime(l3.TIME) && this.GetEpochTime(LAST_CAA.TIME) <= this.GetEpochTime(l3.TIME))
+            }
+            let start_time = L3SM? this.GetEpochTime(L3SM.TIME) :this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
             let end_time = this.GetEpochTime(entry.TIME)
             return {...entry,SETUP_TIME:end_time-start_time}
         })
@@ -541,6 +609,80 @@ export class NemoParameterGrid {
         csfb_call_drop = ('polygon' in opts)? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : csfb_call_drop
         
         return {CSFB_CALL_ATTEMPT:csfb_call_attempt,CSFB_CALL_CONNECTED:csfb_call_connected,CSFB_CALL_DROP:csfb_call_drop}
+    }
+
+    nemo_call(data,opts:any){
+
+        if (!data.CAA) throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC) throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD) throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.L3SM) throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
+
+        //console.time("nemo_csfb_call")
+        let call_attempt = data.CAA.map(entry => {
+            //console.log(data.CAC.filter(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file))
+            let terminated_call = data.CAC.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file && call.CALL_STATUS === '2')
+            if(!terminated_call){
+                terminated_call = data.CAF.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            }
+            return {...entry,terminated:terminated_call}
+        }).filter(entry =>{ 
+            //console.table(entry)
+            if(!entry.terminated){
+                //console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                return false
+            }else if(!(entry.terminated.CALL_TYPE == '1')){
+                //console.warn(`terminting call is not a voice call type`)
+                return false
+            }
+            if('FAIL' in entry.terminated){
+                //console.warn(`call fail detected`)
+                if(entry.terminated.FAIL == '5' || entry.terminated.FAIL == '1' || entry.terminated.FAIL == '2'){return false}
+            }
+            return true
+        })/*.filter((entry) =>{ // filter only LTE system at start of the call
+            if(entry.MEAS_SYSTEM === '7' || entry.MEAS_SYSTEM === '8'){
+                return true
+            }else{
+                return false
+            }
+        })*/
+
+        //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
+        call_attempt = ('polygon' in opts) ? call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : call_attempt
+        
+        
+        let call_connected = data.CAC.filter(entry => entry.CALL_TYPE == '1' && entry.CALL_STATUS == "3").map(entry => {
+            // call setup calculation for MTC is different from MOC
+            // csfb_setup_time = CAC - 'CS_SERVICE_NOTIFICATION'  # if L3SM "CS_SERVICE_NOTIFICATION" exist
+            // --- else ---
+            // csfb_setup_time = CAC - CAA
+            const CAA = data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file)
+            const LAST_CAA = [...data.CAC]
+                .sort((a,b)=>{return  this.GetEpochTime(a.TIME)- this.GetEpochTime(b.TIME)}) // descending sort time latest time first 
+                .find(call => this.GetEpochTime(call.TIME) <= this.GetEpochTime(CAA.TIME) && call.file == entry.file )
+            let L3SM = null
+            if(!LAST_CAA){
+                L3SM = data.L3SM.filter(l3=>l3.file == entry.file)
+                    .find(l3 => (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && this.GetEpochTime(CAA.TIME) >= this.GetEpochTime(l3.TIME))
+            }else{
+                L3SM = data.L3SM.filter(l3=>l3.file == entry.file)
+                    .find(l3 => (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && this.GetEpochTime(CAA.TIME) >= this.GetEpochTime(l3.TIME) && this.GetEpochTime(LAST_CAA.TIME) <= this.GetEpochTime(l3.TIME))
+            }
+            let start_time = L3SM? this.GetEpochTime(L3SM.TIME) :this.GetEpochTime(data.CAA.find(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file).TIME)
+            let end_time = this.GetEpochTime(entry.TIME)
+            return {...entry,SETUP_TIME:end_time-start_time}
+        })
+        
+        //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
+        call_connected = ('polygon' in opts)? call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : call_connected
+        
+        let call_drop = data.CAD.filter(entry => entry.DROP_REASON != "1" && entry.DROP_REASON != "2")
+        //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
+        call_drop = ('polygon' in opts)? call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), opts.polygon, {ignoreBoundary:false})) : call_drop
+        
+        return {CALL_ATTEMPT:call_attempt,CALL_CONNECTED:call_connected,CALL_DROP:call_drop}
     }
 
     nemo_packet_data_setup(data, opts: any) {
@@ -648,8 +790,15 @@ export class NemoParameterGrid {
         let AQDL = ('polygon' in opts)? data.AQDL.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false })) : data.AQDL
         
         //console.table(AQDL)
-        //filter POQLA NB
-        AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '7')
+        
+        if(('vq_type_dl' in opts)){ // by default mos audio filter any
+            if(opts.vq_type_dl === 'PESQ_NB'){ //filter PESQ NB
+                AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '2')
+            }else if(opts.vq_type_dl === 'POLQA_NB'){ //filter POQLA NB
+                AQDL = AQDL.filter(entry => entry.AUDIOTYPE == '7')
+            }
+        }
+        
         return {MOS_QUALITY:AQDL.map(entry => parseFloat(entry.MOS))}
     }
 
@@ -674,5 +823,34 @@ export class NemoParameterGrid {
         //console.log(RSRP_RSRQ.length,CINR.length)
         //console.timeEnd("nemo_cell_measurement")
         return { "RSRP_RSRQ" : RSRP_RSRQ, "SINR": CINR }
+    }
+
+    nemo_ue_measurement_umts(data,opts:any){
+        if (!data.CELLMEAS) throw console.error('CELLMEAS is not decoded while parsing logfile. Consider update decoder field.');
+
+        let RSCP_ECNO = data.CELLMEAS.reduce((acc,cur) => {
+            //Best active set
+            let BEST_ECNO_SET  = cur.loop.filter(meas => meas.CELLTYPE == '0' && meas.ECNO !== '')
+            let BEST_ECNO = Math.max(...BEST_ECNO_SET.map(meas => parseFloat(meas.ECNO)))
+            let BEST_ECNO_CH = BEST_ECNO_SET.find(meas => meas.ECNO == BEST_ECNO)
+            BEST_ECNO_CH = BEST_ECNO_CH? BEST_ECNO_CH.CH : ''
+            let BEST_ACTIVE_SET = cur.loop.filter(meas => meas.CELLTYPE == '0').find(meas => meas.ECNO == BEST_ECNO)
+            let BEST_RSCP  = BEST_ACTIVE_SET? parseFloat(BEST_ACTIVE_SET.RSCP) : null
+            return [...acc, {RSCP:BEST_RSCP,ECNO:BEST_ECNO,LAT: cur.LAT, LON: cur.LON, CHANNEL: BEST_ECNO_CH, TIME: cur.TIME, FILE: cur.file}]
+          },[]).filter(entry => entry.RSCP !== null)
+
+        if ('polygon' in opts) {
+            RSCP_ECNO = RSCP_ECNO.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
+
+        return { "RSCP_ECNO" : RSCP_ECNO }
+    }
+
+    nemo_rlc_bler(data,opts:any){
+        if (!data.RLCBLER) throw console.error('RLCBLER is not decoded while parsing logfile. Consider update decoder field.');
+
+        let RLCBLER = data.RLCBLER.filter(entry => entry.BLER !== '').map(entry => parseFloat(entry.BLER))
+
+        return {"RLC_BLER":RLCBLER}
     }
 }

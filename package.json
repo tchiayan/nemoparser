@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "module": "dist/index.mjs",
   "scripts": {
-    "test": "mocha -r ts-node/register src/index.spec.ts -t 30000",
+    "test": "mocha -r ts-node/register src/index.spec.ts -t 60000",
     "test-server": "node server-test/server.js",
     "build": "tsc",
     "git-update": "git add -A && git commit -m \"Version Update\" && git push origin master",

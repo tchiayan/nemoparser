@@ -21,7 +21,8 @@ Nemo Parameter
     Optional Parameter: 
     ```
     {
-        polygon: geoJSON \\filter area
+        polygon: geoJSON, \\filter area
+        filter_channel?: Array[] string \\filter scanning channel 
     }
     ```
 
@@ -63,7 +64,8 @@ Nemo Parameter
     Optional Parameter: 
     ```
     {
-        polygon: geoJSON \\filter area
+        polygon: geoJSON | JSON, \\filter area
+        filter_channel?: Array[] string \\filter scanning channel
     }
     ```
 
@@ -90,6 +92,40 @@ Nemo Parameter
         },
         SCANNER_RSRQ:Array[]{
             RSRQ | float,
+            TIME | string,
+            CH | string,
+            file | string,
+            LAT | float (degree),
+            LON | float (degree),
+            duplicate | boolean
+        }
+    }
+    ```
+
+- UMTS_SCANNER_MEASUREMENT
+
+    Optional Parameter: 
+    ```
+    {
+        polygon: geoJSON | JSON, \\filter area
+        filter_channel?: Array[] string \\filter scanning channel
+    }
+    ```
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        SCANNER_RSCP:Array[]{
+            RSCP | float,
+            TIME | string,
+            CH | string,
+            file | string,
+            LAT | float (degree),
+            LON | float (degree),
+            duplicate | boolean
+        },
+        SCANNER_ECNO:Array[]{
+            ECNO | float,
             TIME | string,
             CH | string,
             file | string,
@@ -294,7 +330,7 @@ Nemo Parameter
             file | string,
             LAT | float,
             LON | float,
-            SETUP_TIME | integer    # in miliseconds
+            SETUP_TIME | integer    # in miliseconds, setup time from call attempt to call connected
         },
         CSFB_CALL_DROP:Array[]{
             TIME | string,
@@ -371,7 +407,7 @@ Nemo Parameter
     DisplayGrid return result format as follow:
     ```
     {
-        PDSCH_BLER | Array[]number 
+        PDSCH_BLER | Array[]number (float)
     }
     ```
 
@@ -408,8 +444,8 @@ Nemo Parameter
     }
     ```
 
-- AUDIO_QUALITY_MOS
-    
+- UMTS_UE_MEASUREMENT
+ 
     Optional Parameter: 
     ```
     {
@@ -420,6 +456,40 @@ Nemo Parameter
     DisplayGrid return result format as follow:
     ```
     {
+        RSCP_ECNO: Array[]{
+            RSCP: float,
+            ECNO: float, 
+            LAT: float, // degree
+            LON: float, // degree
+            CHANNEL: string,
+            TIME: string,
+            FILE: string,
+        }
+    }
+    ```
+
+- AUDIO_QUALITY_MOS
+    
+    Optional Parameter: 
+    ```
+    {
+        polygon: geoJSON, \\filter area
+        vq_type_dl?: string ('PESQ_NB' or 'POLQA_NB' or 'any' ) \\ optional, if no specified, any is used
+    }
+    ```
+
+    DisplayGrid return result format as follow:
+    ```
+    {
         MOS_QUALITY: Array[]number
+    }
+    ```
+
+- RLC_BLER
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        RLC_BLER: Array[]number (float)
     }
     ```

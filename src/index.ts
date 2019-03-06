@@ -2,7 +2,6 @@ import * as DECODER from './shared/nemo_decoder'
 import {Observable,Observer, Subscription} from 'rxjs'
 import {ParseLogfileStatus} from './model/model'
 import {NemoParameterGrid} from './shared/nemo_parameter_grid'
-import { readFileSync } from 'fs'
 
 export interface LogfileBuffer {
     data: string,
@@ -215,11 +214,24 @@ export class NemoParser {
                     if(!('OFDMSCAN' in extraction)) extraction['OFDMSCAN'] = DECODER.LTE_TDD_SCANNER
                     break;
 
+                case 'UMTS_SCANNER_MEASUREMENT':
+                    if(!('PILOTSCAN' in extraction)) extraction['PILOTSCAN'] = DECODER.UMTS_SCANNER
+                    break;
+
                 case 'LTE_TDD_UE_MEASUREMENT':
                     if(!('CELLMEAS' in extraction)) extraction['CELLMEAS'] = DECODER.UE_LTE_TDD_CELLMEAS
                     if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_TDD_CI
                     break;
-                    
+
+                case 'LTE_FDD_UE_MEASUREMENT':
+                    if(!('CELLMEAS' in extraction)) extraction['CELLMEAS'] = DECODER.UE_LTE_FDD_CELLMEAS
+                    if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_FDD_CI
+                    break;
+                
+                case 'UMTS_UE_MEASUREMENT':
+                    if(!('CELLMEAS' in extraction)) extraction['CELLMEAS'] = DECODER.UE_UMTS_CELLMEAS
+                    break;
+
                 case 'APPLICATION_THROUGHPUT_DOWNLINK':
                     if(!('DRATE' in extraction)) extraction['DRATE'] = DECODER.DRATE_DL
                     if(!('CI' in extraction)) extraction['CI'] = DECODER.UE_LTE_CI
@@ -262,8 +274,17 @@ export class NemoParser {
                     if(!('CAC' in extraction)) extraction['CAC'] = DECODER.UE_CAC
                     if(!('CAF' in extraction)) extraction['CAF'] = DECODER.UE_CAF
                     if(!('CAD' in extraction)) extraction['CAD'] = DECODER.UE_CAD
+                    if(!('L3SM' in extraction)) extraction['L3SM'] = DECODER.UE_L3SM
                     break;
                 
+                case 'CALL':
+                    if(!('CAA' in extraction)) extraction['CAA'] = DECODER.UE_CAA
+                    if(!('CAC' in extraction)) extraction['CAC'] = DECODER.UE_CAC
+                    if(!('CAF' in extraction)) extraction['CAF'] = DECODER.UE_CAF
+                    if(!('CAD' in extraction)) extraction['CAD'] = DECODER.UE_CAD
+                    if(!('L3SM' in extraction)) extraction['L3SM'] = DECODER.UE_L3SM
+                    break;
+
                 case 'PDP_CONTEXT_SETUP':
                     if(!('PAA' in extraction)) extraction['PAA'] = DECODER.UE_PAA
                     if(!('PAC' in extraction)) extraction['PAC'] = DECODER.UE_PAC
@@ -286,7 +307,11 @@ export class NemoParser {
 
                 case 'AUDIO_QUALITY_MOS':
                     if(!('AQDL' in extraction)) extraction['AQDL'] = DECODER.UE_AUDIO_MOS
-
+                    break;
+                
+                case 'RLC_BLER':
+                    if(!('RLCBLER' in extraction)) extraction['RLCBLER'] = DECODER.UE_RLC_BLER
+                    break;
             }
         }
         
@@ -300,13 +325,22 @@ export class NemoParser {
                     for(let param of nemo_params){
                         switch(param){
                             case 'LTE_FDD_SCANNER_MEASUREMENT':
-                                result[param] = new NemoParameterGrid().nemo_scanner_measurement(data.result,opts)
+                                result[param] = new NemoParameterGrid().nemo_lte_scanner_measurement(data.result,opts)
                                 break;
                             case 'LTE_TDD_SCANNER_MEASUREMENT':
-                                result[param] = new NemoParameterGrid().nemo_scanner_measurement(data.result,opts)
+                                result[param] = new NemoParameterGrid().nemo_lte_scanner_measurement(data.result,opts)
+                                break;
+                            case 'UMTS_SCANNER_MEASUREMENT':
+                                result[param] = new NemoParameterGrid().nemo_umts_scanner_measurement(data.result,opts)
                                 break;
                             case 'LTE_TDD_UE_MEASUREMENT':
                                 result[param] = new NemoParameterGrid().nemo_ue_measurement(data.result,opts)
+                                break;
+                            case 'LTE_FDD_UE_MEASUREMENT':
+                                result[param] = new NemoParameterGrid().nemo_ue_measurement(data.result,opts)
+                                break;
+                            case 'UMTS_UE_MEASUREMENT':
+                                result[param] = new NemoParameterGrid().nemo_ue_measurement_umts(data.result,opts)
                                 break;
                             case 'APPLICATION_THROUGHPUT_DOWNLINK':
                                 result[param] = new NemoParameterGrid().nemo_application_throughput_downlink_filter_sinr(data.result,opts)
@@ -332,6 +366,9 @@ export class NemoParser {
                             case 'CSFB_CALL':
                                 result[param] = new NemoParameterGrid().nemo_csfb_call(data.result,opts)
                                 break;
+                            case 'CALL':
+                                result[param] = new NemoParameterGrid().nemo_call(data.result,opts)
+                                break;
                             case 'PDP_CONTEXT_SETUP':
                                 result[param] = new NemoParameterGrid().nemo_packet_data_setup(data.result,opts)
                                 break;
@@ -346,6 +383,9 @@ export class NemoParser {
                                 break;
                             case 'AUDIO_QUALITY_MOS':
                                 result[param] = new NemoParameterGrid().nemo_mos_quality(data.result,opts)
+                                break;
+                            case 'RLC_BLER':
+                                result[param] = new NemoParameterGrid().nemo_rlc_bler(data.result,option)
                                 break;
                         }
                     }
