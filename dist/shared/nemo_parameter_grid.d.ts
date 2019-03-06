@@ -2,10 +2,14 @@ export declare class NemoParameterGrid {
     constructor();
     private nemo_scanner_field_n_best;
     private GetEpochTime;
-    nemo_scanner_measurement(data: any, opts: any): {
+    nemo_lte_scanner_measurement(data: any, opts: any): {
         'SCANNER_RSRP': any[];
         'SCANNER_CINR': any[];
         'SCANNER_RSRQ': any[];
+    };
+    nemo_umts_scanner_measurement(data: any, opts: any): {
+        'SCANNER_RSCP': any[];
+        'SCANNER_ECNO': any[];
     };
     nemo_application_throughput_downlink_filter_sinr(data: any, opts: any): any;
     nemo_application_throughput_uplink(data: any, opts: any): {
@@ -28,6 +32,11 @@ export declare class NemoParameterGrid {
         CSFB_CALL_ATTEMPT: any;
         CSFB_CALL_CONNECTED: any;
         CSFB_CALL_DROP: any;
+    };
+    nemo_call(data: any, opts: any): {
+        CALL_ATTEMPT: any;
+        CALL_CONNECTED: any;
+        CALL_DROP: any;
     };
     nemo_packet_data_setup(data: any, opts: any): {
         PACKET_DATA_SETUP_ATTEMPT: any;
@@ -52,5 +61,11 @@ export declare class NemoParameterGrid {
     nemo_ue_measurement(data: any, opts: any): {
         "RSRP_RSRQ": any;
         "SINR": any;
+    };
+    nemo_ue_measurement_umts(data: any, opts: any): {
+        "RSCP_ECNO": any;
+    };
+    nemo_rlc_bler(data: any, opts: any): {
+        "RLC_BLER": any;
     };
 }

@@ -32,28 +32,49 @@ var NemoParameterGrid = /** @class */ (function () {
                     top_field[field] = top_meas[field];
                 }
             }
-            /*let top_field = entry.loop.length!==0?entry.loop.filter((meas)=>meas[field] !== '')
-                .map((meas)=>{
-                    let temp = {}
-                    temp[field] = parseFloat(meas[field])
-                    return temp
-                }).sort((a,b)=>b[field] - a[field])[0]:empty_field*/
+            else {
+                /*if(index - CH_COUNT >= 0){
+                    if(array[index-CH_COUNT].loop.length !== 0){
+                        let top_list = array[index-CH_COUNT].loop.filter((meas)=>meas[field] !== '')
+                        if(top_list.length !==0){
+                            let top_meas = top_list.map((meas)=>{
+                                let temp = {}
+                                temp[field] = parseFloat(meas[field])
+                                return temp
+                            }).sort((a,b)=>b[field] - a[field])[0]
+                            top_field[field] = top_meas[field]
+                        }
+                    }else{
+                        console.log(`Empty loop: ${entry.EARFCN} FILE: ${entry.file}`)
+                    }
+                }else{
+                    console.log(`No early loop: ${entry.EARFCN} FILE: ${entry.file}`)
+                }*/
+            }
             return __assign({}, top_field, { TIME: entry.TIME, CH: entry.EARFCN, file: entry.file, LAT: entry.LAT, LON: entry.LON });
-        }).map(function (entry, index, array) {
+        });
+        var CH_COUNT = Array.from(new Set(data.map(function (entry) { return entry.EARFCN; }))).length;
+        //console.log(CH_COUNT)
+        rfield = CH_COUNT === 1 ? rfield : rfield.map(function (entry, index, array) {
             if (entry[field] !== '') {
                 return entry;
             }
             else {
                 var ch = entry.CH;
                 var i = --index;
-                while (array[i].CH !== ch) {
-                    --i;
+                while (array[i].CH !== ch && i >= 0) {
+                    i--;
+                    if (i < 0)
+                        break;
                 }
+                if (i < 0)
+                    return entry;
                 var new_entry = __assign({}, entry);
                 new_entry[field] = array[i][field];
                 return new_entry;
             }
-        }).filter(function (entry) { return entry[field] !== ""; }).map(function (entry, index, array) {
+        });
+        rfield = rfield.filter(function (entry) { return entry[field] !== ""; }).map(function (entry, index, array) {
             if (index !== array.length - 1) {
                 if (entry.TIME == array[index + 1].TIME) {
                     if (array[index + 1][field] < entry[field]) {
@@ -102,7 +123,7 @@ var NemoParameterGrid = /** @class */ (function () {
     NemoParameterGrid.prototype.GetEpochTime = function (timeString) {
         return Date.parse("1970-01-01T" + timeString + "Z");
     };
-    NemoParameterGrid.prototype.nemo_scanner_measurement = function (data, opts) {
+    NemoParameterGrid.prototype.nemo_lte_scanner_measurement = function (data, opts) {
         //console.time("nemo_scanner_measurement")
         if (!data.OFDMSCAN)
             throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
@@ -113,6 +134,8 @@ var NemoParameterGrid = /** @class */ (function () {
         var RSRQ = [];
         var _loop_1 = function (file) {
             var filter_data = data.OFDMSCAN.filter(function (entry) { return entry.file == file; });
+            /* filter channel */
+            filter_data = ('filter_channel' in opts) ? filter_data.filter(function (entry) { return opts.filter_channel.includes(entry.EARFCN); }) : filter_data;
             RSRP = RSRP.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRP'));
             CINR = CINR.concat(this_1.nemo_scanner_field_n_best(filter_data, 'CINR'));
             RSRQ = RSRQ.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRQ'));
@@ -128,6 +151,31 @@ var NemoParameterGrid = /** @class */ (function () {
         //console.timeEnd("nemo_scanner_measurement")
         return { 'SCANNER_RSRP': RSRP, 'SCANNER_CINR': CINR, 'SCANNER_RSRQ': RSRQ };
     };
+    NemoParameterGrid.prototype.nemo_umts_scanner_measurement = function (data, opts) {
+        //console.time("nemo_scanner_measurement")
+        if (!data.PILOTSCAN)
+            throw console.error('PILOTSCAN is not decoded while parsing logfile. Consider update decoder field.');
+        var PILOTSCAN = data.PILOTSCAN;
+        var files = Array.from(new Set(PILOTSCAN.map(function (entry) { return entry.file; })));
+        var RSCP = [];
+        var ECNO = [];
+        var _loop_2 = function (file) {
+            var filter_data = data.PILOTSCAN.filter(function (entry) { return entry.file == file; });
+            /* filter channel */
+            filter_data = ('filter_channel' in opts) ? filter_data.filter(function (entry) { return opts.filter_channel.includes(entry.EARFCN); }) : filter_data;
+            RSCP = RSCP.concat(this_2.nemo_scanner_field_n_best(filter_data, 'RSCP'));
+            ECNO = ECNO.concat(this_2.nemo_scanner_field_n_best(filter_data, 'ECNO'));
+        };
+        var this_2 = this;
+        for (var _i = 0, files_2 = files; _i < files_2.length; _i++) {
+            var file = files_2[_i];
+            _loop_2(file);
+        }
+        RSCP = ('polygon' in opts) ? RSCP.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true }); }) : RSCP;
+        ECNO = ('polygon' in opts) ? ECNO.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true }); }) : ECNO;
+        //console.timeEnd("nemo_scanner_measurement")
+        return { 'SCANNER_RSCP': RSCP, 'SCANNER_ECNO': ECNO };
+    };
     NemoParameterGrid.prototype.nemo_application_throughput_downlink_filter_sinr = function (data, opts) {
         var _this = this;
         //console.time("nemo_application_throughput_downlink_filter_sinr")
@@ -142,35 +190,35 @@ var NemoParameterGrid = /** @class */ (function () {
         data.DRATE = data.DRATE.map(function (entry) { return __assign({}, entry, { ETIME: _this.GetEpochTime(entry.TIME) }); });
         var file_list = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
         var temp_DRATE = [];
-        var _loop_2 = function (file) {
+        var _loop_3 = function (file) {
             var temp_drate = data.DRATE.filter(function (entry) { return entry.file == file; }).sort(function (a, b) { return a.ETIME - b.ETIME; });
-            var _loop_4 = function (i) {
+            var _loop_5 = function (i) {
                 if (!(i == 0)) {
                     temp_drate[i].LAT = temp_drate[i - 1].LAT;
                     temp_drate[i].LON = temp_drate[i - 1].LON;
                     temp_drate[i].TIME = temp_drate[i - 1].TIME;
                     temp_drate[i]['duplicate'] = temp_drate[i].ETIME == temp_drate[i - 1].ETIME;
-                    temp_drate[i].ETIME = this_2.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i].ETIME = this_3.GetEpochTime(temp_drate[i].TIME);
                 }
                 else {
                     var DREQ = data.DREQ.find(function (entry) { return entry.file == temp_drate[i].file; });
                     temp_drate[i].LAT = DREQ.LAT;
                     temp_drate[i].LON = DREQ.LON;
                     temp_drate[i].TIME = DREQ.TIME;
-                    temp_drate[i].ETIME = this_2.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i].ETIME = this_3.GetEpochTime(temp_drate[i].TIME);
                     temp_drate[i]['duplicate'] = false;
                 }
             };
             //console.log(temp_drate)
             for (var i = temp_drate.length - 1; i >= 0; i--) {
-                _loop_4(i);
+                _loop_5(i);
             }
             temp_DRATE = temp_DRATE.concat(temp_drate);
         };
-        var this_2 = this;
+        var this_3 = this;
         for (var _i = 0, file_list_1 = file_list; _i < file_list_1.length; _i++) {
             var file = file_list_1[_i];
-            _loop_2(file);
+            _loop_3(file);
         }
         data.DRATE = temp_DRATE;
         data.DRATE.sort(function (a, b) { return a.ETIME - b.ETIME; });
@@ -184,7 +232,7 @@ var NemoParameterGrid = /** @class */ (function () {
             //console.time("nemo_dl_snr_attach")
             //Get file list
             var file_list_3 = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
-            var _loop_3 = function (file) {
+            var _loop_4 = function (file) {
                 SINR = data.CI.filter(function (entry) { return entry.CELLTYPE === '0' && entry.file === file; }).map(function (entry) {
                     return { TIME: entry.TIME, ETIME: _this.GetEpochTime(entry.TIME), file: entry.file, CELLTYPE: entry.CELLTYPE, CINR: parseFloat(entry.CINR) };
                 }).sort(function (a, b) { return a.ETIME - b.ETIME; }); //.filter(entry => entry.ETIME >= DRATE[0].ETIME - 500)
@@ -247,7 +295,7 @@ var NemoParameterGrid = /** @class */ (function () {
                 //attach SINR to last DRATE
                 var FIRST_ENTRY = true;
                 var DLSNR1 = [];
-                var DCOMP = data.DCOMP.find(function (entry) { return entry.file == file; }) ? this_3.GetEpochTime(data.DCOMP.find(function (entry) { return entry.file == file; }).TIME) : SINR[SINR_CURSOR].ETIME + 2000;
+                var DCOMP = data.DCOMP.find(function (entry) { return entry.file == file; }) ? this_4.GetEpochTime(data.DCOMP.find(function (entry) { return entry.file == file; }).TIME) : SINR[SINR_CURSOR].ETIME + 2000;
                 //console.table(DCOMP)
                 while (SINR_CURSOR < SINR.length) {
                     if ((DRATE[DRATE.length - 1].ETIME <= SINR[SINR_CURSOR].ETIME) && (SINR[SINR_CURSOR].ETIME <= DCOMP)) {
@@ -268,11 +316,11 @@ var NemoParameterGrid = /** @class */ (function () {
                 //console.log(DL_SNR)
                 //DL_SNR = [...DL_SNR, ...DRATE]
             };
-            var this_3 = this, SINR;
+            var this_4 = this, SINR;
             //Process file
             for (var _a = 0, file_list_2 = file_list_3; _a < file_list_2.length; _a++) {
                 var file = file_list_2[_a];
-                _loop_3(file);
+                _loop_4(file);
             }
             //console.log(`Current DL Time: ${entry.TIME} [${entry.ETIME}] | Next DL Time: ${array[index+1].TIME} [${array[index+1].ETIME}] Found table below`)
             //console.table(CINR)
@@ -306,35 +354,35 @@ var NemoParameterGrid = /** @class */ (function () {
         data.DRATE = data.DRATE.map(function (entry) { return __assign({}, entry, { ETIME: _this.GetEpochTime(entry.TIME) }); });
         var file_list = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
         var temp_DRATE = [];
-        var _loop_5 = function (file) {
+        var _loop_6 = function (file) {
             var temp_drate = data.DRATE.filter(function (entry) { return entry.file == file; }).sort(function (a, b) { return a.ETIME - b.ETIME; });
-            var _loop_6 = function (i) {
+            var _loop_7 = function (i) {
                 if (!(i == 0)) {
                     temp_drate[i].LAT = temp_drate[i - 1].LAT;
                     temp_drate[i].LON = temp_drate[i - 1].LON;
                     temp_drate[i].TIME = temp_drate[i - 1].TIME;
                     temp_drate[i]['duplicate'] = temp_drate[i].ETIME == temp_drate[i - 1].ETIME;
-                    temp_drate[i].ETIME = this_4.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i].ETIME = this_5.GetEpochTime(temp_drate[i].TIME);
                 }
                 else {
                     var DREQ = data.DREQ.find(function (entry) { return entry.file == temp_drate[i].file; });
                     temp_drate[i].LAT = DREQ.LAT;
                     temp_drate[i].LON = DREQ.LON;
                     temp_drate[i].TIME = DREQ.TIME;
-                    temp_drate[i].ETIME = this_4.GetEpochTime(temp_drate[i].TIME);
+                    temp_drate[i].ETIME = this_5.GetEpochTime(temp_drate[i].TIME);
                     temp_drate[i]['duplicate'] = false;
                     //console.table(temp_drate[i])
                 }
             };
             for (var i = temp_drate.length - 1; i >= 0; i--) {
-                _loop_6(i);
+                _loop_7(i);
             }
             temp_DRATE = temp_DRATE.concat(temp_drate);
         };
-        var this_4 = this;
+        var this_5 = this;
         for (var _i = 0, file_list_4 = file_list; _i < file_list_4.length; _i++) {
             var file = file_list_4[_i];
-            _loop_5(file);
+            _loop_6(file);
         }
         data.DRATE = temp_DRATE;
         data.DRATE.sort(function (a, b) { return a.ETIME - b.ETIME; });
@@ -486,6 +534,8 @@ var NemoParameterGrid = /** @class */ (function () {
             throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.CAD)
             throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.L3SM)
+            throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
         //console.time("nemo_csfb_call")
         var csfb_call_attempt = data.CAA.map(function (entry) {
             //console.log(data.CAC.filter(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file))
@@ -528,7 +578,23 @@ var NemoParameterGrid = /** @class */ (function () {
                 return false;
             }
         }).map(function (entry) {
-            var start_time = _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
+            // call setup calculation for MTC is different from MOC
+            // csfb_setup_time = CAC - 'CS_SERVICE_NOTIFICATION'  # if L3SM "CS_SERVICE_NOTIFICATION" exist
+            // --- else ---
+            // csfb_setup_time = CAC - CAA
+            var CAA = data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            var LAST_CAA = data.CAC.slice().sort(function (a, b) { return _this.GetEpochTime(a.TIME) - _this.GetEpochTime(b.TIME); }) // descending sort time latest time first 
+                .find(function (call) { return _this.GetEpochTime(call.TIME) <= _this.GetEpochTime(CAA.TIME) && call.file == entry.file; });
+            var L3SM = null;
+            if (!LAST_CAA) {
+                L3SM = data.L3SM.filter(function (l3) { return l3.file == entry.file; })
+                    .find(function (l3) { return (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && _this.GetEpochTime(CAA.TIME) >= _this.GetEpochTime(l3.TIME); });
+            }
+            else {
+                L3SM = data.L3SM.filter(function (l3) { return l3.file == entry.file; })
+                    .find(function (l3) { return (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && _this.GetEpochTime(CAA.TIME) >= _this.GetEpochTime(l3.TIME) && _this.GetEpochTime(LAST_CAA.TIME) <= _this.GetEpochTime(l3.TIME); });
+            }
+            var start_time = L3SM ? _this.GetEpochTime(L3SM.TIME) : _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
             var end_time = _this.GetEpochTime(entry.TIME);
             return __assign({}, entry, { SETUP_TIME: end_time - start_time });
         });
@@ -538,6 +604,80 @@ var NemoParameterGrid = /** @class */ (function () {
         //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
         csfb_call_drop = ('polygon' in opts) ? csfb_call_drop.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : csfb_call_drop;
         return { CSFB_CALL_ATTEMPT: csfb_call_attempt, CSFB_CALL_CONNECTED: csfb_call_connected, CSFB_CALL_DROP: csfb_call_drop };
+    };
+    NemoParameterGrid.prototype.nemo_call = function (data, opts) {
+        var _this = this;
+        if (!data.CAA)
+            throw console.error('CAA is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAC)
+            throw console.error('CAC is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAF)
+            throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.CAD)
+            throw console.error('CAF is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.L3SM)
+            throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
+        //console.time("nemo_csfb_call")
+        var call_attempt = data.CAA.map(function (entry) {
+            //console.log(data.CAC.filter(call => call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file))
+            var terminated_call = data.CAC.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file && call.CALL_STATUS === '2'; });
+            if (!terminated_call) {
+                terminated_call = data.CAF.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            }
+            return __assign({}, entry, { terminated: terminated_call });
+        }).filter(function (entry) {
+            //console.table(entry)
+            if (!entry.terminated) {
+                //console.warn(`terminating call not found possiblity logfile error FILE:${entry.file}`)
+                return false;
+            }
+            else if (!(entry.terminated.CALL_TYPE == '1')) {
+                //console.warn(`terminting call is not a voice call type`)
+                return false;
+            }
+            if ('FAIL' in entry.terminated) {
+                //console.warn(`call fail detected`)
+                if (entry.terminated.FAIL == '5' || entry.terminated.FAIL == '1' || entry.terminated.FAIL == '2') {
+                    return false;
+                }
+            }
+            return true;
+        }); /*.filter((entry) =>{ // filter only LTE system at start of the call
+            if(entry.MEAS_SYSTEM === '7' || entry.MEAS_SYSTEM === '8'){
+                return true
+            }else{
+                return false
+            }
+        })*/
+        //csfb_call_attempt = filter.area? csfb_call_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), filter.area, { ignoreBoundary: false })) : csfb_call_attempt
+        call_attempt = ('polygon' in opts) ? call_attempt.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : call_attempt;
+        var call_connected = data.CAC.filter(function (entry) { return entry.CALL_TYPE == '1' && entry.CALL_STATUS == "3"; }).map(function (entry) {
+            // call setup calculation for MTC is different from MOC
+            // csfb_setup_time = CAC - 'CS_SERVICE_NOTIFICATION'  # if L3SM "CS_SERVICE_NOTIFICATION" exist
+            // --- else ---
+            // csfb_setup_time = CAC - CAA
+            var CAA = data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; });
+            var LAST_CAA = data.CAC.slice().sort(function (a, b) { return _this.GetEpochTime(a.TIME) - _this.GetEpochTime(b.TIME); }) // descending sort time latest time first 
+                .find(function (call) { return _this.GetEpochTime(call.TIME) <= _this.GetEpochTime(CAA.TIME) && call.file == entry.file; });
+            var L3SM = null;
+            if (!LAST_CAA) {
+                L3SM = data.L3SM.filter(function (l3) { return l3.file == entry.file; })
+                    .find(function (l3) { return (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && _this.GetEpochTime(CAA.TIME) >= _this.GetEpochTime(l3.TIME); });
+            }
+            else {
+                L3SM = data.L3SM.filter(function (l3) { return l3.file == entry.file; })
+                    .find(function (l3) { return (l3.MESSAGE === '"CS_SERVICE_NOTIFICATION"') && _this.GetEpochTime(CAA.TIME) >= _this.GetEpochTime(l3.TIME) && _this.GetEpochTime(LAST_CAA.TIME) <= _this.GetEpochTime(l3.TIME); });
+            }
+            var start_time = L3SM ? _this.GetEpochTime(L3SM.TIME) : _this.GetEpochTime(data.CAA.find(function (call) { return call.CALL_CONTEXT == entry.CALL_CONTEXT && call.file == entry.file; }).TIME);
+            var end_time = _this.GetEpochTime(entry.TIME);
+            return __assign({}, entry, { SETUP_TIME: end_time - start_time });
+        });
+        //csfb_call_connected = filter.area? csfb_call_connected.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_connected
+        call_connected = ('polygon' in opts) ? call_connected.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : call_connected;
+        var call_drop = data.CAD.filter(function (entry) { return entry.DROP_REASON != "1" && entry.DROP_REASON != "2"; });
+        //csfb_call_drop = filter.area? csfb_call_drop.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON,entry.LAT]), filter.area, {ignoreBoundary:false})) : csfb_call_drop
+        call_drop = ('polygon' in opts) ? call_drop.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : call_drop;
+        return { CALL_ATTEMPT: call_attempt, CALL_CONNECTED: call_connected, CALL_DROP: call_drop };
     };
     NemoParameterGrid.prototype.nemo_packet_data_setup = function (data, opts) {
         if (!data.PAA)
@@ -625,8 +765,14 @@ var NemoParameterGrid = /** @class */ (function () {
         //let AQDL = data.AQDL
         var AQDL = ('polygon' in opts) ? data.AQDL.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); }) : data.AQDL;
         //console.table(AQDL)
-        //filter POQLA NB
-        AQDL = AQDL.filter(function (entry) { return entry.AUDIOTYPE == '7'; });
+        if (('vq_type_dl' in opts)) { // by default mos audio filter any
+            if (opts.vq_type_dl === 'PESQ_NB') { //filter PESQ NB
+                AQDL = AQDL.filter(function (entry) { return entry.AUDIOTYPE == '2'; });
+            }
+            else if (opts.vq_type_dl === 'POLQA_NB') { //filter POQLA NB
+                AQDL = AQDL.filter(function (entry) { return entry.AUDIOTYPE == '7'; });
+            }
+        }
         return { MOS_QUALITY: AQDL.map(function (entry) { return parseFloat(entry.MOS); }) };
     };
     NemoParameterGrid.prototype.nemo_ue_measurement = function (data, opts) {
@@ -648,6 +794,30 @@ var NemoParameterGrid = /** @class */ (function () {
         //console.log(RSRP_RSRQ.length,CINR.length)
         //console.timeEnd("nemo_cell_measurement")
         return { "RSRP_RSRQ": RSRP_RSRQ, "SINR": CINR };
+    };
+    NemoParameterGrid.prototype.nemo_ue_measurement_umts = function (data, opts) {
+        if (!data.CELLMEAS)
+            throw console.error('CELLMEAS is not decoded while parsing logfile. Consider update decoder field.');
+        var RSCP_ECNO = data.CELLMEAS.reduce(function (acc, cur) {
+            //Best active set
+            var BEST_ECNO_SET = cur.loop.filter(function (meas) { return meas.CELLTYPE == '0' && meas.ECNO !== ''; });
+            var BEST_ECNO = Math.max.apply(Math, BEST_ECNO_SET.map(function (meas) { return parseFloat(meas.ECNO); }));
+            var BEST_ECNO_CH = BEST_ECNO_SET.find(function (meas) { return meas.ECNO == BEST_ECNO; });
+            BEST_ECNO_CH = BEST_ECNO_CH ? BEST_ECNO_CH.CH : '';
+            var BEST_ACTIVE_SET = cur.loop.filter(function (meas) { return meas.CELLTYPE == '0'; }).find(function (meas) { return meas.ECNO == BEST_ECNO; });
+            var BEST_RSCP = BEST_ACTIVE_SET ? parseFloat(BEST_ACTIVE_SET.RSCP) : null;
+            return acc.concat([{ RSCP: BEST_RSCP, ECNO: BEST_ECNO, LAT: cur.LAT, LON: cur.LON, CHANNEL: BEST_ECNO_CH, TIME: cur.TIME, FILE: cur.file }]);
+        }, []).filter(function (entry) { return entry.RSCP !== null; });
+        if ('polygon' in opts) {
+            RSCP_ECNO = RSCP_ECNO.filter(function (entry) { return turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }); });
+        }
+        return { "RSCP_ECNO": RSCP_ECNO };
+    };
+    NemoParameterGrid.prototype.nemo_rlc_bler = function (data, opts) {
+        if (!data.RLCBLER)
+            throw console.error('RLCBLER is not decoded while parsing logfile. Consider update decoder field.');
+        var RLCBLER = data.RLCBLER.filter(function (entry) { return entry.BLER !== ''; }).map(function (entry) { return parseFloat(entry.BLER); });
+        return { "RLC_BLER": RLCBLER };
     };
     return NemoParameterGrid;
 }());

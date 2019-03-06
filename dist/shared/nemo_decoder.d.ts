@@ -3,9 +3,6 @@ export declare const LTE_FDD_SCANNER: {
         0: string;
         3: string;
         6: string;
-        10: {
-            condition: string;
-        };
     };
     output: {
         'SYSTEM': string;
@@ -67,9 +64,9 @@ export declare const UMTS_SCANNER: {
             p: number;
             s: number;
             c: {
-                'PCI': number;
-                'RSRP': number;
-                'CINR': number;
+                'SC': number;
+                'RSCP': number;
+                'ECNO': number;
             };
         };
     };
@@ -98,17 +95,6 @@ export declare const DRATE_UL: {
 export declare const UE_LTE_CI: {
     filter: {
         0: string;
-    };
-    output: {
-        'TIME': number;
-        'CINR': number;
-        "CELLTYPE": number;
-    };
-};
-export declare const UE_LTE_FDD_CI: {
-    filter: {
-        0: string;
-        3: string;
     };
     output: {
         'TIME': number;
@@ -325,6 +311,57 @@ export declare const UE_LTE_TDD_CELLMEAS: {
         };
     };
 };
+export declare const UE_LTE_FDD_CELLMEAS: {
+    filter: {
+        0: string;
+        3: string;
+    };
+    output: {
+        'SYSTEM': string;
+        'DEVICE': string;
+        'TIME': number;
+        'EARFCN': number;
+        loop: {
+            n: number;
+            p: number;
+            s: number;
+            c: {
+                'PCI': number;
+                'RSRP': number;
+                'RSRQ': number;
+                'EARFCN': number;
+                'CELLTYPE': number;
+            };
+        };
+    };
+};
+export declare const UE_UMTS_CELLMEAS: {
+    filter: {
+        0: string;
+        3: string;
+    };
+    output: {
+        'SYSTEM': string;
+        'DEVICE': string;
+        'TIME': number;
+        loop: {
+            n: {
+                s: number;
+                p: number;
+                n: number;
+            };
+            p: number;
+            s: {};
+            c: {
+                'CELLTYPE': number;
+                'CH': number;
+                'SC': number;
+                'ECNO': number;
+                'RSCP': number;
+            };
+        };
+    };
+};
 export declare const UE_LTE_TDD_CI: {
     filter: {
         0: string;
@@ -334,5 +371,35 @@ export declare const UE_LTE_TDD_CI: {
         'TIME': number;
         'CINR': number;
         "CELLTYPE": number;
+    };
+};
+export declare const UE_LTE_FDD_CI: {
+    filter: {
+        0: string;
+        3: string;
+    };
+    output: {
+        'TIME': number;
+        'CINR': number;
+        "CELLTYPE": number;
+    };
+};
+export declare const UE_L3SM: {
+    filter: {
+        0: string;
+    };
+    output: {
+        'TIME': number;
+        'MEAS_SYSTEM': number;
+        'MESSAGE': number;
+    };
+};
+export declare const UE_RLC_BLER: {
+    filter: {
+        0: string;
+    };
+    output: {
+        'TIME': number;
+        'BLER': number;
     };
 };
