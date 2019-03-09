@@ -11,6 +11,16 @@ Class NemoParser
     > files | FileList
     > nemoOptionalParameter | any
 
+> convertToFeaturesCollection(data|Array[Object], ColorSet?|Array[Object])
+
+    Return
+    ```
+    {
+        geojson: GeoJSON | FeatureCollection,
+        file: filename | string
+    }
+    ```
+
 
 Class LogfileBuffer
 > Constructor (fileBuffer|FileString, filename|string)
@@ -33,7 +43,7 @@ Nemo Parameter
             RSRP | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -42,7 +52,7 @@ Nemo Parameter
             CINR | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -51,7 +61,7 @@ Nemo Parameter
             RSRQ | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean

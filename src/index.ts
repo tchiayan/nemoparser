@@ -2,6 +2,7 @@ import * as DECODER from './shared/nemo_decoder'
 import {Observable,Observer, Subscription} from 'rxjs'
 import {ParseLogfileStatus} from './model/model'
 import {NemoParameterGrid} from './shared/nemo_parameter_grid'
+import {NemoGeoJSON} from './shared/nemo_geojson'
 
 export interface LogfileBuffer {
     data: string,
@@ -405,5 +406,24 @@ export class NemoParser {
             }
         })
         
+    }
+
+    public convertToFeaturesCollection(data:any[],ranges?:any[]){
+        let range = [{
+            color: 'red',
+            field: 'RSRP',
+            condition: {
+                eq: 0
+            }
+        }]
+        const GeoJSONParser = new NemoGeoJSON()
+        const FILES = Array.from(new Set(data.map(entry => entry.FILE)))
+        const layers = FILES.map((file)=>{
+            return {
+                geojson: GeoJSONParser.convertToGeoJSON(data.filter(entry => entry.FILE === file),ranges),
+                file: file
+            }
+        })
+        return layers
     }
 }

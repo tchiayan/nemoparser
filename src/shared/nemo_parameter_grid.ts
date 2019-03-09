@@ -1,5 +1,5 @@
 import * as turf from '@turf/turf'
-import { polygon } from '@turf/turf';
+//import { polygon } from '@turf/turf';
 
 export class NemoParameterGrid {
     constructor(){}
@@ -42,7 +42,7 @@ export class NemoParameterGrid {
                 }*/
             }
             return {...top_field,
-                TIME:entry.TIME,CH:entry.EARFCN,file:entry.file,LAT:entry.LAT,LON:entry.LON}
+                TIME:entry.TIME,CH:entry.EARFCN,FILE:entry.file,LAT:entry.LAT,LON:entry.LON}
         })
         
         const CH_COUNT = Array.from(new Set(data.map(entry => entry.EARFCN))).length
