@@ -1,19 +1,17 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var DECODER = require("./shared/nemo_decoder");
 var rxjs_1 = require("rxjs");
 var nemo_parameter_grid_1 = require("./shared/nemo_parameter_grid");
+var nemo_geojson_1 = require("./shared/nemo_geojson");
 var LogfileBuffer = /** @class */ (function () {
     function LogfileBuffer(data, filename) {
         return { data: data, filename: filename };
@@ -450,6 +448,24 @@ var NemoParser = /** @class */ (function () {
                 _this.parseLogfile(option.files, extraction).subscribe(subFunction);
             }
         });
+    };
+    NemoParser.prototype.convertToFeaturesCollection = function (data, ranges) {
+        var range = [{
+                color: 'red',
+                field: 'RSRP',
+                condition: {
+                    eq: 0
+                }
+            }];
+        var GeoJSONParser = new nemo_geojson_1.NemoGeoJSON();
+        var FILES = Array.from(new Set(data.map(function (entry) { return entry.FILE; })));
+        var layers = FILES.map(function (file) {
+            return {
+                geojson: GeoJSONParser.convertToGeoJSON(data.filter(function (entry) { return entry.FILE === file; }), ranges),
+                file: file
+            };
+        });
+        return layers;
     };
     return NemoParser;
 }());
