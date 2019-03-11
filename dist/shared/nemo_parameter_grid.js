@@ -55,6 +55,7 @@ var NemoParameterGrid = /** @class */ (function () {
             return __assign({}, top_field, { TIME: entry.TIME, CH: entry.EARFCN, FILE: entry.file, LAT: entry.LAT, LON: entry.LON });
         });
         var CH_COUNT = Array.from(new Set(data.map(function (entry) { return entry.EARFCN; }))).length;
+        //console.log(Array.from(new Set(data.map(entry => entry.EARFCN))))
         //console.log(CH_COUNT)
         rfield = CH_COUNT === 1 ? rfield : rfield.map(function (entry, index, array) {
             if (entry[field] !== '') {
@@ -63,8 +64,11 @@ var NemoParameterGrid = /** @class */ (function () {
             else {
                 var ch = entry.CH;
                 var i = --index;
+                //console.log(`${array.length}|${i}|File:${entry.FILE}`)
+                if (i < 0)
+                    return entry;
                 while (array[i].CH !== ch && i >= 0) {
-                    i--;
+                    --i;
                     if (i < 0)
                         break;
                 }

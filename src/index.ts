@@ -1,8 +1,10 @@
 import * as DECODER from './shared/nemo_decoder'
-import {Observable,Observer, Subscription} from 'rxjs'
-import {ParseLogfileStatus} from './model/model'
-import {NemoParameterGrid} from './shared/nemo_parameter_grid'
-import {NemoGeoJSON} from './shared/nemo_geojson'
+import { Observable,Observer, Subscription} from 'rxjs'
+import { ParseLogfileStatus } from './model/model'
+import { NemoParameterGrid } from './shared/nemo_parameter_grid'
+import { NemoGeoJSON} from './shared/nemo_geojson'
+import { NemoFile } from './shared/nemo_file'
+import { unzip } from './shared/unzip'
 
 export interface LogfileBuffer {
     data: string,
@@ -425,5 +427,23 @@ export class NemoParser {
             }
         })
         return layers
+    }
+}
+
+export class NemoFileUnzipper {
+    private unzip_data
+    constructor(){
+    }
+
+    public unzip(data):Promise<any>{
+        return new Promise((resolve)=>{
+            unzip(data).then((result)=>{
+                let added = result.map((file)=>{
+                    let details = (new NemoFile(file.data))
+                    return {...file, ...details.getFileProperties(), group: details.grouping()}
+                })
+                resolve(added)
+            })
+        })
     }
 }

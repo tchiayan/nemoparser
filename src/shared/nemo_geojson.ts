@@ -112,7 +112,7 @@ export class NemoGeoJSON {
                             coordinates:lonLat
                         }
                     })
-                    lonLat = [data[i+1].LON, data[i].LAT]
+                    lonLat = [[data[i+1].LON, data[i].LAT]]
                     previousColor = color
                 }
             }else{

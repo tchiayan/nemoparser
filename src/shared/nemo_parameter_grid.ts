@@ -46,6 +46,7 @@ export class NemoParameterGrid {
         })
         
         const CH_COUNT = Array.from(new Set(data.map(entry => entry.EARFCN))).length
+        //console.log(Array.from(new Set(data.map(entry => entry.EARFCN))))
         //console.log(CH_COUNT)
 
         rfield = CH_COUNT === 1? rfield: rfield.map((entry,index,array)=>{ // replace empty value
@@ -54,7 +55,9 @@ export class NemoParameterGrid {
             }else{
                 let ch = entry.CH
                 let i = --index
-                while(array[i].CH !== ch && i >= 0){i--;if(i < 0) break;}
+                //console.log(`${array.length}|${i}|File:${entry.FILE}`)
+                if(i < 0) return entry
+                while(array[i].CH !== ch && i >= 0){--i;if(i < 0) break;}
                 if(i < 0) return entry
                 let new_entry = {...entry}
                 new_entry[field] = array[i][field]
@@ -120,9 +123,9 @@ export class NemoParameterGrid {
         let OFDMSCAN = data.OFDMSCAN
         
         let files = Array.from(new Set(OFDMSCAN.map(entry => entry.file)))
-        let RSRP:any[] = []
-        let CINR:any[] = []
-        let RSRQ:any[] = []
+        let RSRP:{RSRP:number,TIME:string,CH:string,FILE:string,LAT:number,LON:number,duplicate:boolean}[] = []
+        let CINR:{CINR:number,TIME:string,CH:string,FILE:string,LAT:number,LON:number,duplicate:boolean}[] = []
+        let RSRQ:{RSRQ:number,TIME:string,CH:string,FILE:string,LAT:number,LON:number,duplicate:boolean}[] = []
         for(let file of files){
             let filter_data = data.OFDMSCAN.filter((entry) => entry.file == file)
 

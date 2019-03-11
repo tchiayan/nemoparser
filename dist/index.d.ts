@@ -26,3 +26,8 @@ export declare class NemoParser {
         file: any;
     }[];
 }
+export declare class NemoFileUnzipper {
+    private unzip_data;
+    constructor();
+    unzip(data: any): Promise<any>;
+}

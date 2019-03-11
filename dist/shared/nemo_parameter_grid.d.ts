@@ -3,9 +3,33 @@ export declare class NemoParameterGrid {
     private nemo_scanner_field_n_best;
     private GetEpochTime;
     nemo_lte_scanner_measurement(data: any, opts: any): {
-        'SCANNER_RSRP': any[];
-        'SCANNER_CINR': any[];
-        'SCANNER_RSRQ': any[];
+        'SCANNER_RSRP': {
+            RSRP: number;
+            TIME: string;
+            CH: string;
+            FILE: string;
+            LAT: number;
+            LON: number;
+            duplicate: boolean;
+        }[];
+        'SCANNER_CINR': {
+            CINR: number;
+            TIME: string;
+            CH: string;
+            FILE: string;
+            LAT: number;
+            LON: number;
+            duplicate: boolean;
+        }[];
+        'SCANNER_RSRQ': {
+            RSRQ: number;
+            TIME: string;
+            CH: string;
+            FILE: string;
+            LAT: number;
+            LON: number;
+            duplicate: boolean;
+        }[];
     };
     nemo_umts_scanner_measurement(data: any, opts: any): {
         'SCANNER_RSCP': any[];

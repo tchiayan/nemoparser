@@ -7,10 +7,11 @@
   "module": "dist/index.mjs",
   "scripts": {
     "test": "mocha -r ts-node/register src/index.spec.ts -t 60000",
+    "test-decompress": "mocha -r ts-node/register src/shared/unzip.spec.ts -t 60000",
     "test-server": "node server-test/server.js",
     "build": "tsc",
     "git-update": "git add -A && git commit -m \"Version Update\" && git push origin master",
-    "npm-update": "tsc && npm version patch && npm publish"
+    "npm-update": "tsc && git add -A && git commit -m \"Version Update\" && git push origin master && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
   "homepage": "https://github.com/tchiayan/nemoparser#readme",
   "dependencies": {
     "@turf/turf": "^5.1.6",
+    "decompress": "^4.2.0",
     "json2csv": "^4.3.4",
     "rxjs": "^6.3.3"
   },

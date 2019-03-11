@@ -86,7 +86,7 @@ Nemo Parameter
             RSRP | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -95,7 +95,7 @@ Nemo Parameter
             CINR | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -104,7 +104,7 @@ Nemo Parameter
             RSRQ | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -129,7 +129,7 @@ Nemo Parameter
             RSCP | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -138,7 +138,7 @@ Nemo Parameter
             ECNO | float,
             TIME | string,
             CH | string,
-            file | string,
+            FILE | string,
             LAT | float (degree),
             LON | float (degree),
             duplicate | boolean
@@ -418,6 +418,39 @@ Nemo Parameter
     ```
     {
         PDSCH_BLER | Array[]number (float)
+    }
+    ```
+
+- LTE_FDD_UE_MEASUREMENT
+    
+    Optional Parameter: 
+    ```
+    {
+        polygon: geoJSON \\filter area
+    }
+    ```
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        RSRP_RSRQ: Array[]{
+            RSRP: float,
+            RSRQ: float, 
+            CELLTYPE: string,
+            LAT: float, // degree
+            LON: float, // degree
+            CHANNEL: string,
+            TIME: string,
+            FILE: string,
+        },
+        SINR:{
+            TIME: string,
+            CINR: float,
+            CELLTYPE: string,
+            file: string,
+            LAT: float, // degree
+            LON: float, // degree
+        }
     }
     ```
 

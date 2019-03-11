@@ -1,9 +1,28 @@
-import { NemoParser, LogfileBuffer } from './index'
-import { readFileSync, readdirSync,writeFileSync, write, fstat } from 'fs'
+import { NemoParser, LogfileBuffer, NemoFileUnzipper } from './index'
+import { readFileSync, readdirSync,writeFileSync, write, fstat, readFile } from 'fs'
 import { expect } from 'chai';
 import { NemoGeoJSON } from './shared/nemo_geojson';
 
 const Json2csvParser = require('json2csv').Parser;
+
+function parseDirectoryLogfile(path):LogfileBuffer[]{
+    let bufferArray:LogfileBuffer[] = []
+    readdirSync(path).forEach(file =>{
+        const fileBuffer = readFileSync(`${path}/${file}`,{encoding:'utf-8'})
+        const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+        bufferArray.push(logfileBuffer)
+    })
+    return bufferArray
+}
+
+describe("UNZIP NEMO File",()=>{
+    it('unzip ssv file',async ()=>{
+        const zipfile = readFileSync('./server-test/zip/ZIP_LOGFILE.zip')
+        let zipper = new NemoFileUnzipper()
+        let result = await zipper.unzip(zipfile)
+        expect(result).to.be.an('array').have.lengthOf(211)
+    })
+})
 
 describe("CONVERT GEOJSON FEATURE",()=>{
     it('NemoGeoJSON Function Testing',()=>{
@@ -120,7 +139,42 @@ describe("CONVERT GEOJSON FEATURE",()=>{
                     featureCollection.features.forEach((feature)=>{
                         const coordinate = feature.geometry.coordinates
                         coordinate.forEach(([lon,lat])=>{
-                            console.log(lon)
+                            expect(lon).to.be.an('number').not.eq(0)
+                            expect(lat).to.be.an('number').not.eq(0)
+                        })
+                    })
+                })
+            }
+        })
+    })
+
+    it('FDD PSDL Route Test With Color Set',()=>{
+        const directory = './server-test/logfiles/FDD_LTE_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_FDD_UE_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_FDD_UE_MEASUREMENT']
+                let layers = testClass.convertToFeaturesCollection(data['RSRP_RSRQ'],[
+                    {color:'green',field:'RSRP',condition:{gt:-80}},
+                    {color:'yellow',field:'RSRP',condition:{lt:-80,gt:-108}},
+                    {color:'red',field:'RSRP',condition:{lt:-108}}
+                  ])
+                expect(layers).to.be.an('array').have.lengthOf(4)
+                const geoJSONArray = layers.map(output => output.geojson)
+                geoJSONArray.forEach((featureCollection)=>{
+                    featureCollection.features.forEach((feature)=>{
+                        const coordinate = feature.geometry.coordinates
+                        coordinate.forEach(([lon,lat])=>{
                             expect(lon).to.be.an('number').not.eq(0)
                             expect(lat).to.be.an('number').not.eq(0)
                         })
@@ -211,15 +265,7 @@ describe('FUNCTION RESPONSE TEST',()=>{
 })
 
 describe('UMTS FILE PARSING & KPI CHECK',() => {
-    function parseDirectoryLogfile(path):LogfileBuffer[]{
-        let bufferArray:LogfileBuffer[] = []
-        readdirSync(path).forEach(file =>{
-            const fileBuffer = readFileSync(`${path}/${file}`,{encoding:'utf-8'})
-            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
-            bufferArray.push(logfileBuffer)
-        })
-        return bufferArray
-    }
+    
 
     it('LOAD UMTS SCANNER FILE | UMTS_SCANNER_MEASUREMENT',()=>{
         const testClass = new NemoParser();
@@ -793,6 +839,30 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
         })
     })
 })
+
+describe('DIGI SSV SCANNER TEST',()=>{
+    it('LOAD FDD SCANNER FILE | LTE_FDD_SCANNER_MEASUREMENT',()=>{
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_FDD_SCANNER_MEASUREMENT'],{fileBuffer:parseDirectoryLogfile('./server-test/logfiles/FDD_SCANNER_SSV')}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_FDD_SCANNER_MEASUREMENT']
+                //console.log(`RSCP: ${data['SCANNER_RSCP'].length} | ECNO: ${data['SCANNER_ECNO'].length}`)
+                expect(data).to.have.keys(['SCANNER_RSRP','SCANNER_CINR','SCANNER_RSRQ'])
+                //expect(data['SCANNER_RSCP']).to.be.an('array').lengthOf(4387)
+                //expect(data['SCANNER_ECNO']).to.be.an('array').lengthOf(4387)
+
+                
+                //const RSCP_AVG = parseFloat((data['SCANNER_RSCP'].reduce((acc,cur)=> {return acc + cur.RSCP},0)/data['SCANNER_RSCP'].length).toFixed(3))
+                //expect(RSCP_AVG).to.be.eq(-59.523)
+                //const ECNO_AVG = parseFloat((data['SCANNER_ECNO'].reduce((acc,cur)=> {return acc + cur.ECNO},0)/data['SCANNER_ECNO'].length).toFixed(3))
+                //expect(ECNO_AVG).to.be.eq(-9.274)
+            }
+        })
+    })
+})
+
 
 describe('LTE TDD FILE PARSING & KPI CHECK',() => {
     it('LOAD TDD SCANNER FILE | LTE_TDD_SCANNER_MEASUREMENT',()=>{
@@ -1573,4 +1643,6 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
         })
     })
 })
+
+
 
