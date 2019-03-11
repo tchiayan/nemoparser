@@ -16,7 +16,6 @@ var rxjs_1 = require("rxjs");
 var nemo_parameter_grid_1 = require("./shared/nemo_parameter_grid");
 var nemo_geojson_1 = require("./shared/nemo_geojson");
 var nemo_file_1 = require("./shared/nemo_file");
-var unzip_1 = require("./shared/unzip");
 var LogfileBuffer = /** @class */ (function () {
     function LogfileBuffer(data, filename) {
         return { data: data, filename: filename };
@@ -475,20 +474,28 @@ var NemoParser = /** @class */ (function () {
     return NemoParser;
 }());
 exports.NemoParser = NemoParser;
-var NemoFileUnzipper = /** @class */ (function () {
-    function NemoFileUnzipper() {
+/*export class NemoFileUnzipper {
+    constructor(){
     }
-    NemoFileUnzipper.prototype.unzip = function (data) {
-        return new Promise(function (resolve) {
-            unzip_1.unzip(data).then(function (result) {
-                var added = result.map(function (file) {
-                    var details = (new nemo_file_1.NemoFile(file.data));
-                    return __assign({}, file, details.getFileProperties(), { group: details.grouping() });
-                });
-                resolve(added);
-            });
-        });
+
+    public unzip(data):Promise<any>{
+        return new Promise((resolve)=>{
+            unzip(data).then((result)=>{
+                let added = result.map((file)=>{
+                    let details = (new NemoFile(file.data))
+                    return {...file, ...details.getFileProperties(), group: details.grouping()}
+                })
+                resolve(added)
+            })
+        })
+    }
+}*/
+var NemoFileReader = /** @class */ (function () {
+    function NemoFileReader() {
+    }
+    NemoFileReader.prototype.parse = function (data) {
+        return new nemo_file_1.NemoFile(data);
     };
-    return NemoFileUnzipper;
+    return NemoFileReader;
 }());
-exports.NemoFileUnzipper = NemoFileUnzipper;
+exports.NemoFileReader = NemoFileReader;

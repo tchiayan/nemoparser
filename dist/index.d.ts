@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { NemoParameterGrid } from './shared/nemo_parameter_grid';
+import { NemoFile } from './shared/nemo_file';
 export interface LogfileBuffer {
     data: string;
     filename: string;
@@ -26,8 +27,7 @@ export declare class NemoParser {
         file: any;
     }[];
 }
-export declare class NemoFileUnzipper {
-    private unzip_data;
+export declare class NemoFileReader {
     constructor();
-    unzip(data: any): Promise<any>;
+    parse(data: any): NemoFile;
 }

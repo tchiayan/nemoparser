@@ -1,4 +1,4 @@
-import { NemoParser, LogfileBuffer, NemoFileUnzipper } from './index'
+import { NemoParser, LogfileBuffer } from './index'
 import { readFileSync, readdirSync,writeFileSync, write, fstat, readFile } from 'fs'
 import { expect } from 'chai';
 import { NemoGeoJSON } from './shared/nemo_geojson';
@@ -15,14 +15,14 @@ function parseDirectoryLogfile(path):LogfileBuffer[]{
     return bufferArray
 }
 
-describe("UNZIP NEMO File",()=>{
+/*describe("UNZIP NEMO File",()=>{
     it('unzip ssv file',async ()=>{
         const zipfile = readFileSync('./server-test/zip/ZIP_LOGFILE.zip')
         let zipper = new NemoFileUnzipper()
         let result = await zipper.unzip(zipfile)
         expect(result).to.be.an('array').have.lengthOf(211)
     })
-})
+})*/
 
 describe("CONVERT GEOJSON FEATURE",()=>{
     it('NemoGeoJSON Function Testing',()=>{

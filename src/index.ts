@@ -430,8 +430,7 @@ export class NemoParser {
     }
 }
 
-export class NemoFileUnzipper {
-    private unzip_data
+/*export class NemoFileUnzipper {
     constructor(){
     }
 
@@ -445,5 +444,14 @@ export class NemoFileUnzipper {
                 resolve(added)
             })
         })
+    }
+}*/
+
+export class NemoFileReader {
+    constructor(){
+    }
+
+    public parse(data){
+        return new NemoFile(data)
     }
 }

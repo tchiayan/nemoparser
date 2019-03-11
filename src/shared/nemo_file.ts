@@ -1,7 +1,7 @@
 import { parse } from "path";
 import { cpus } from "os";
 
-export class NemoFile{
+export class NemoFile {
     private fileProperties:any = {SYSTEM:[]}
     private location:{lat:number,lng:number}[] = []
     constructor(data:Buffer){
