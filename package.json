@@ -1,6 +1,6 @@
 {
   "name": "nemoparser",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "description": "",
   "main": "dist/index",
   "types": "dist/index.d.ts",
