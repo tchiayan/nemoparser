@@ -96,6 +96,39 @@ describe("CONVERT GEOJSON FEATURE",()=>{
             }
         })
     })
+
+    it('FDD PSDL Route Test',()=>{
+        const directory = './server-test/logfiles/FDD_LTE_PSDL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['LTE_FDD_UE_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['LTE_FDD_UE_MEASUREMENT']
+                let layers = testClass.convertToFeaturesCollection(data['RSRP_RSRQ'])
+                expect(layers).to.be.an('array').have.lengthOf(4)
+                const geoJSONArray = layers.map(output => output.geojson)
+                geoJSONArray.forEach((featureCollection)=>{
+                    featureCollection.features.forEach((feature)=>{
+                        const coordinate = feature.geometry.coordinates
+                        coordinate.forEach(([lon,lat])=>{
+                            console.log(lon)
+                            expect(lon).to.be.an('number').not.eq(0)
+                            expect(lat).to.be.an('number').not.eq(0)
+                        })
+                    })
+                })
+            }
+        })
+    })
 })
 
 describe("DEBUG FAIZ PSDL LONG",()=>{

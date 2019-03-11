@@ -77,7 +77,9 @@ export class NemoGeoJSON {
         let previousColor = ''
         for(let i=0; i < data.length-1; i++){
             const color= condition? this.colorCheck(data[i],condition):null
-            
+            if(data[i].LON === 0 || data[i].LAT === 0){
+                continue
+            }
             if(color){
                 //console.log(color)
                 if(i === 0){
