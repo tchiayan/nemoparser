@@ -452,6 +452,6 @@ export class NemoFileReader {
     }
 
     public parse(data){
-        return new NemoFile(data)
+        return new NemoFile(data).getFileProperties()
     }
 }

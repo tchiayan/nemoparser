@@ -494,7 +494,7 @@ var NemoFileReader = /** @class */ (function () {
     function NemoFileReader() {
     }
     NemoFileReader.prototype.parse = function (data) {
-        return new nemo_file_1.NemoFile(data);
+        return new nemo_file_1.NemoFile(data).getFileProperties();
     };
     return NemoFileReader;
 }());
