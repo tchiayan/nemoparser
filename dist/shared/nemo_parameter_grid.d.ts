@@ -92,4 +92,7 @@ export declare class NemoParameterGrid {
     nemo_rlc_bler(data: any, opts: any): {
         "RLC_BLER": any;
     };
+    nemo_l3_message(data: any, opts: any): {
+        "L3_MESSAGE": any;
+    };
 }

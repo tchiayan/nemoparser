@@ -357,6 +357,10 @@ var NemoParser = /** @class */ (function () {
                     if (!('RLCBLER' in extraction))
                         extraction['RLCBLER'] = DECODER.UE_RLC_BLER;
                     break;
+                case 'L3_MESSAGE':
+                    if (!('L3SM' in extraction))
+                        extraction['L3SM'] = DECODER.UE_L3SM;
+                    break;
             }
         }
         return rxjs_1.Observable.create(function (observer) {
@@ -431,6 +435,9 @@ var NemoParser = /** @class */ (function () {
                                 break;
                             case 'RLC_BLER':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_rlc_bler(data.result, option);
+                                break;
+                            case 'L3_MESSAGE':
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_l3_message(data.result, option);
                                 break;
                         }
                     }

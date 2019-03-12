@@ -401,6 +401,19 @@ describe('UMTS FILE PARSING & KPI CHECK',() => {
             }
         })
     })
+
+    it('LOAD UMTS FDD_CSFB_MOC | L3_MESSAGE',()=>{
+        const testClass = new NemoParser();
+        testClass.displayGrid(['L3_MESSAGE'],{fileBuffer:parseDirectoryLogfile('./server-test/logfiles/FDD_CSFB_MOC')}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['L3_MESSAGE']
+                expect(data).to.have.keys(['L3_MESSAGE'])
+                //console.log(data)
+                expect(data['L3_MESSAGE']).to.be.an('array').have.lengthOf.gt(0)
+            }
+        })
+    })
 })
 
 

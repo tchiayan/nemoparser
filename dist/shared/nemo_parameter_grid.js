@@ -824,6 +824,22 @@ var NemoParameterGrid = /** @class */ (function () {
         var RLCBLER = data.RLCBLER.filter(function (entry) { return entry.BLER !== ''; }).map(function (entry) { return parseFloat(entry.BLER); });
         return { "RLC_BLER": RLCBLER };
     };
+    NemoParameterGrid.prototype.nemo_l3_message = function (data, opts) {
+        var _this = this;
+        if (!data.L3SM)
+            throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
+        //console.log(data.L3SM)
+        var L3SM = data.L3SM.map(function (entry) {
+            return {
+                FILE: entry.file,
+                TIME: entry.TIME,
+                ETIME: _this.GetEpochTime(entry.TIME),
+                MESSAGE: entry.MESSAGE.replace(/"|\r|\n/g, ""),
+                SYSTEM: entry.MEAS_SYSTEM
+            };
+        });
+        return { "L3_MESSAGE": L3SM };
+    };
     return NemoParameterGrid;
 }());
 exports.NemoParameterGrid = NemoParameterGrid;

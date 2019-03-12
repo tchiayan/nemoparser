@@ -856,4 +856,21 @@ export class NemoParameterGrid {
 
         return {"RLC_BLER":RLCBLER}
     }
+
+    nemo_l3_message(data, opts:any){
+        if (!data.L3SM) throw console.error('L3SM is not decoded while parsing logfile. Consider update decoder field.');
+
+        //console.log(data.L3SM)
+        const L3SM = data.L3SM.map((entry)=>{
+            return {
+                FILE:entry.file,
+                TIME:entry.TIME,
+                ETIME:this.GetEpochTime(entry.TIME),
+                MESSAGE:entry.MESSAGE.replace(/"|\r|\n/g,""),
+                SYSTEM:entry.MEAS_SYSTEM
+            }
+        })
+
+        return {"L3_MESSAGE":L3SM}
+    }
 }

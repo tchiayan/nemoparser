@@ -443,7 +443,7 @@ Nemo Parameter
             TIME: string,
             FILE: string,
         },
-        SINR:{
+        SINR: Array[]{
             TIME: string,
             CINR: float,
             CELLTYPE: string,
@@ -534,5 +534,20 @@ Nemo Parameter
     ```
     {
         RLC_BLER: Array[]number (float)
+    }
+    ```
+
+- L3_MESSAGE
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        L3_MESSAGE: Array[]{
+            FILE: string,
+            TIME: string,
+            ETIME: number,
+            MESSAGE: string,
+            SYSTEM: string, // Refer to nemo measurement system format
+        }
     }
     ```

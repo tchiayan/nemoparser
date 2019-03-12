@@ -315,6 +315,10 @@ export class NemoParser {
                 case 'RLC_BLER':
                     if(!('RLCBLER' in extraction)) extraction['RLCBLER'] = DECODER.UE_RLC_BLER
                     break;
+
+                case 'L3_MESSAGE':
+                    if(!('L3SM' in extraction)) extraction['L3SM'] = DECODER.UE_L3SM
+                    break;
             }
         }
         
@@ -389,6 +393,9 @@ export class NemoParser {
                                 break;
                             case 'RLC_BLER':
                                 result[param] = new NemoParameterGrid().nemo_rlc_bler(data.result,option)
+                                break;
+                            case 'L3_MESSAGE':
+                                result[param] = new NemoParameterGrid().nemo_l3_message(data.result,option)
                                 break;
                         }
                     }
