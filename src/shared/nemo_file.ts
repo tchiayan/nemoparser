@@ -4,6 +4,7 @@ import { cpus } from "os";
 export class NemoFile {
     private fileProperties:any = {SYSTEM:[]}
     private location:{lat:number,lng:number}[] = []
+    private servingPCIdetection:string[] = []
     constructor(data:Buffer){
         const data_utf8_line = data.toString('utf-8').split("\n")
         for(let i=0; i<data_utf8_line.length; i++){
@@ -25,6 +26,10 @@ export class NemoFile {
                 }else if(cols[3] === '7'){
                     if(!this.fileProperties.SYSTEM.includes("LTE FDD")){
                         this.fileProperties.SYSTEM.push("LTE FDD")
+                    }
+
+                    if(cols[7] === '0' && !this.servingPCIdetection.includes(cols[10])){
+                        this.servingPCIdetection.push(cols[10])
                     }
                 }else if(cols[3] === '8'){
                     if(!this.fileProperties.SYSTEM.includes("LTE TDD")){
@@ -82,6 +87,13 @@ export class NemoFile {
             this.fileProperties['MOBILITY'] = "STATIC"
         }else{
             this.fileProperties['MOBILITY'] = "MOBILITY"
+        }
+
+        //determine PCI
+        if(this.servingPCIdetection.length === 1){
+            this.fileProperties['SINGLEPCI'] = this.servingPCIdetection[0]
+        }else if(this.servingPCIdetection.length > 1){
+            this.fileProperties['MULTIPLEPCI'] = this.servingPCIdetection
         }
     }
 

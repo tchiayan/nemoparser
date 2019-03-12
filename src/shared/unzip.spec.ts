@@ -10,9 +10,9 @@ describe('Unzip file testing',()=>{
             expect(result).to.be.an('array').have.lengthOf(211)
             result.forEach(({data,filename})=>{
                 const file = new NemoFile(data)
-                console.log(`${filename} => ${file.grouping()}`)
-                //console.log(filename)
-                //console.log(file.getFileProperties())
+                //console.log(`${filename} => ${file.grouping()}`)
+                console.log(filename)
+                console.log(file.getFileProperties())
             })
         })
     })
