@@ -583,6 +583,7 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
                 expect(data['DL_TP']).to.be.an('array').have.lengthOf(432)
                 const DL_AVG = parseFloat((data['DL_TP'].reduce((acc,cur)=> {return acc + cur},0)/data['DL_TP'].length/1000).toFixed(3))
                 expect(DL_AVG).to.be.eq(3334.345)
+                //console.log(data['DL_TP_LOC'][0])
             }
         })
     })

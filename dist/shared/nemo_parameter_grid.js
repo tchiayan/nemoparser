@@ -1,11 +1,14 @@
 "use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var turf = require("@turf/turf");
@@ -194,7 +197,7 @@ var NemoParameterGrid = /** @class */ (function () {
         var temp_DRATE = [];
         var _loop_3 = function (file) {
             var temp_drate = data.DRATE.filter(function (entry) { return entry.file == file; }).sort(function (a, b) { return a.ETIME - b.ETIME; });
-            var _loop_4 = function (i) {
+            var _loop_5 = function (i) {
                 if (!(i == 0)) {
                     temp_drate[i].LAT = temp_drate[i - 1].LAT;
                     temp_drate[i].LON = temp_drate[i - 1].LON;
@@ -213,7 +216,7 @@ var NemoParameterGrid = /** @class */ (function () {
             };
             //console.log(temp_drate)
             for (var i = temp_drate.length - 1; i >= 0; i--) {
-                _loop_4(i);
+                _loop_5(i);
             }
             temp_DRATE = temp_DRATE.concat(temp_drate);
         };
@@ -233,8 +236,8 @@ var NemoParameterGrid = /** @class */ (function () {
             // attach CINR to dl throughput
             //console.time("nemo_dl_snr_attach")
             //Get file list
-            var file_list_2 = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
-            var _loop_5 = function (file) {
+            var file_list_3 = Array.from(new Set(data.DRATE.map(function (entry) { return entry.file; })));
+            var _loop_4 = function (file) {
                 SINR = data.CI.filter(function (entry) { return entry.CELLTYPE === '0' && entry.file === file; }).map(function (entry) {
                     return { TIME: entry.TIME, ETIME: _this.GetEpochTime(entry.TIME), file: entry.file, CELLTYPE: entry.CELLTYPE, CINR: parseFloat(entry.CINR) };
                 }).sort(function (a, b) { return a.ETIME - b.ETIME; }); //.filter(entry => entry.ETIME >= DRATE[0].ETIME - 500)
@@ -320,9 +323,9 @@ var NemoParameterGrid = /** @class */ (function () {
             };
             var this_4 = this, SINR;
             //Process file
-            for (var _a = 0, file_list_3 = file_list_2; _a < file_list_3.length; _a++) {
-                var file = file_list_3[_a];
-                _loop_5(file);
+            for (var _a = 0, file_list_2 = file_list_3; _a < file_list_2.length; _a++) {
+                var file = file_list_2[_a];
+                _loop_4(file);
             }
             //console.log(`Current DL Time: ${entry.TIME} [${entry.ETIME}] | Next DL Time: ${array[index+1].TIME} [${array[index+1].ETIME}] Found table below`)
             //console.table(CINR)
@@ -336,10 +339,10 @@ var NemoParameterGrid = /** @class */ (function () {
             DL_SNR = DL_SNR.map(function (x) { return { CINR: x.CINR, DL: parseInt(x.DL), TIME: x.TIME }; });
             extras_result['DL_TP_SNR'] = DL_SNR;
         }
-        DL = DL.map(function (x) { return parseInt(x.DL); });
         var DL_TP_LOC = DL.map(function (entry) {
             return { DL: parseInt(entry.DL), TIME: entry.TIME, LAT: entry.LAT, LON: entry.LON, FILE: entry.file };
         });
+        DL = DL.map(function (x) { return parseInt(x.DL); });
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000 && x.CINR >= 10).length}/${DL_SNR.filter(x => x.CINR >= 10).length}`)
         //padl max

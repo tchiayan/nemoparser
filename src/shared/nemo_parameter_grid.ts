@@ -324,10 +324,10 @@ export class NemoParameterGrid {
             extras_result['DL_TP_SNR'] = DL_SNR
         }
         
-        DL = DL.map(x => parseInt(x.DL))
         let DL_TP_LOC = DL.map((entry)=>{
             return {DL:parseInt(entry.DL),TIME:entry.TIME,LAT:entry.LAT,LON:entry.LON,FILE:entry.file}
         })
+        DL = DL.map(x => parseInt(x.DL))
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000 && x.CINR >= 10).length}/${DL_SNR.filter(x => x.CINR >= 10).length}`)
         
