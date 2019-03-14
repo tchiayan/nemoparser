@@ -11,12 +11,12 @@ Class NemoParser
     > files | FileList
     > nemoOptionalParameter | any
 
-> convertToFeaturesCollection(data|Array[Object], ColorSet?|Array[Object])
+> convertToFeaturesCollection(data|Array[Object], LineString|Boolean(Default true), ColorSet?|Array[Object])
 
     Return
     ```
     {
-        geojson: GeoJSON | FeatureCollection,
+        geojson: GeoJSON | FeatureCollection, // return LineString feature collections if LineString parameter set to true
         file: filename | string
     }
     ```
@@ -164,6 +164,13 @@ Nemo Parameter
             CINR | float
             DL | integer
             TIME | string
+        },
+        DL_TP_LOC:Array[]{
+            DL: float,
+            TIME: string,
+            LAT: float,
+            LON: float,
+            FILE: string,
         }
     }
     ```
@@ -230,6 +237,21 @@ Nemo Parameter
     {
         HANDOVER_SUCCESS | number,   # number of handover success from UE
         HANDOVER_ATTEMPT | number,   # number of handover attempt from UE
+        HO_ATTEMPT: Array[]{
+            FILE: string, 
+            LAT: float,
+            LON: float
+        },
+        HO_FAIL: Array[]{
+            FILE: string, 
+            LAT: float,
+            LON: float
+        },
+        HO_SUCCESS: Array[]{
+            FILE: string, 
+            LAT: float,
+            LON: float
+        }
     }
     ```
 
@@ -480,7 +502,7 @@ Nemo Parameter
             TIME: string,
             CINR: float,
             CELLTYPE: string,
-            file: string,
+            FILE: string,
             LAT: float, // degree
             LON: float, // degree
         }
@@ -548,6 +570,22 @@ Nemo Parameter
             ETIME: number,
             MESSAGE: string,
             SYSTEM: string, // Refer to nemo measurement system format
+        }
+    }
+    ```
+
+- SIP_MESSAGE
+
+    DisplayGrid return result format as follow:
+    ```
+    {
+        SIP_MESSAGE: Array[]{
+            FILE: string,
+            TIME: string,
+            ETIME: number,
+            MESSAGE: string,
+            SYSTEM: string, // Refer to nemo measurement system format
+            DIRECTION: string, // Refer to nemo measurement for direction format
         }
     }
     ```

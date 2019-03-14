@@ -1,14 +1,11 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var DECODER = require("./shared/nemo_decoder");
@@ -284,6 +281,8 @@ var NemoParser = /** @class */ (function () {
                         extraction['HOA'] = DECODER.UE_HOA;
                     if (!('HOS' in extraction))
                         extraction['HOS'] = DECODER.UE_HOS;
+                    if (!('HOF' in extraction))
+                        extraction['HOF'] = DECODER.UE_HOF;
                     break;
                 case 'IRAT_HANDOVER':
                     if (!('HOA' in extraction))
@@ -360,6 +359,10 @@ var NemoParser = /** @class */ (function () {
                 case 'L3_MESSAGE':
                     if (!('L3SM' in extraction))
                         extraction['L3SM'] = DECODER.UE_L3SM;
+                    break;
+                case 'SIP_MESSAGE':
+                    if (!('SIPSM' in extraction))
+                        extraction['SIPSM'] = DECODER.UE_SIPSM;
                     break;
             }
         }
@@ -439,6 +442,9 @@ var NemoParser = /** @class */ (function () {
                             case 'L3_MESSAGE':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_l3_message(data.result, option);
                                 break;
+                            case 'SIP_MESSAGE':
+                                result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_sip_message(data.result, option);
+                                break;
                         }
                     }
                     observer.next({ status: 'OK', result: result });
@@ -460,21 +466,23 @@ var NemoParser = /** @class */ (function () {
             }
         });
     };
-    NemoParser.prototype.convertToFeaturesCollection = function (data, ranges) {
-        var range = [{
-                color: 'red',
-                field: 'RSRP',
-                condition: {
-                    eq: 0
-                }
-            }];
+    NemoParser.prototype.convertToFeaturesCollection = function (data, lineString, ranges) {
+        if (lineString === void 0) { lineString = true; }
         var GeoJSONParser = new nemo_geojson_1.NemoGeoJSON();
         var FILES = Array.from(new Set(data.map(function (entry) { return entry.FILE; })));
         var layers = FILES.map(function (file) {
-            return {
-                geojson: GeoJSONParser.convertToGeoJSON(data.filter(function (entry) { return entry.FILE === file; }), ranges),
-                file: file
-            };
+            if (lineString) {
+                return {
+                    geojson: GeoJSONParser.convertToLineStringGeoJSON(data.filter(function (entry) { return entry.FILE === file; }), ranges),
+                    file: file
+                };
+            }
+            else {
+                return {
+                    geojson: GeoJSONParser.convertToPointGeoJSON(data.filter(function (entry) { return entry.FILE === file; })),
+                    file: file
+                };
+            }
         });
         return layers;
     };

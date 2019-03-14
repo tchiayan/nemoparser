@@ -325,7 +325,9 @@ export class NemoParameterGrid {
         }
         
         DL = DL.map(x => parseInt(x.DL))
-        
+        let DL_TP_LOC = DL.map((entry)=>{
+            return {DL:parseInt(entry.DL),TIME:entry.TIME,LAT:entry.LAT,LON:entry.LON,FILE:entry.file}
+        })
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000).length}/${DL_SNR.length}`)
         //console.log(`${DL_SNR.filter(x => x.DL >= 60000000 && x.CINR >= 10).length}/${DL_SNR.filter(x => x.CINR >= 10).length}`)
         
@@ -334,7 +336,7 @@ export class NemoParameterGrid {
         //let psdlavedl = (DL.filter(x => x >= 100000000).length / DL.length * 100).toFixed(2) + "%"
 
         //console.timeEnd('nemo_application_throughput_downlink_filter_sinr')
-        return { DL_TP:DL, ...extras_result }
+        return { DL_TP:DL,DL_TP_LOC:DL_TP_LOC, ...extras_result }
     }
 
     nemo_application_throughput_uplink(data, opts:any) {
@@ -417,6 +419,7 @@ export class NemoParameterGrid {
         //console.time("nemo_intra_handover")
         if (!data.HOA) throw console.error('HOA is not decoded while parsing logfile. Consider update decoder field.');
         if (!data.HOS) throw console.error('HOS is not decoded while parsing logfile. Consider update decoder field.');
+        if (!data.HOF) throw console.error('HOF is not decoded while parsing logfile. Consider update decoder field. ')
 
         let intra_handover_attempt = data.HOA.filter(entry => ['901', '902', '903'].includes(entry.HO_TYPE))
 
@@ -428,10 +431,24 @@ export class NemoParameterGrid {
             intra_handover_attempt = intra_handover_attempt.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
         }
 
+        let intra_handover_failure = data.HOF.filter((entry) => {
+            return intra_handover_attempt.find((hoa_entry) => {
+                return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim()
+            })
+        }).map((entry)=>{
+            return {FILE:entry.file,LAT:entry.LAT,LON:entry.LON}
+        })
+
+        if ('polygon' in opts) {
+            intra_handover_failure = intra_handover_failure.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
+        }
+
         let intra_handover_success = data.HOS.filter((entry) => {
             return intra_handover_attempt.find((hoa_entry) => {
                 return hoa_entry.file == entry.file && hoa_entry.HO_CONTEXT.trim() == entry.HO_CONTEXT.trim()
             })
+        }).map((entry)=>{
+            return {FILE:entry.file,LAT:entry.LAT,LON:entry.LON}
         })
         
         //if (filter.area) {
@@ -444,7 +461,17 @@ export class NemoParameterGrid {
             //warning - attempt in polygon but success not within the polygon will cause incorrect kpi
         }
 
-        return { HANDOVER_SUCCESS: intra_handover_success.length, HANDOVER_ATTEMPT: intra_handover_attempt.length }
+        intra_handover_attempt = intra_handover_attempt.map((entry)=>{
+            return {FILE:entry.file,LAT:entry.LAT,LON:entry.LON}
+        })
+        
+        return {    
+            HANDOVER_SUCCESS: intra_handover_success.length, 
+            HANDOVER_ATTEMPT: intra_handover_attempt.length,
+            HO_ATTEMPT:intra_handover_attempt,
+            HO_FAIL:intra_handover_failure,
+            HO_SUCCESS:intra_handover_success
+        }
     }
 
     nemo_irat_handover(data, opts: any): any {
@@ -815,14 +842,15 @@ export class NemoParameterGrid {
             return entry.loop.map((meas) => { return { RSRP: parseFloat(meas.RSRP), RSRQ: parseFloat(meas.RSRQ), CELLTYPE: meas.CELLTYPE, LAT: entry.LAT, LON: entry.LON, CHANNEL: entry.EARFCN, TIME: entry.TIME, FILE: entry.file } })
         }).filter(entry => entry.CELLTYPE == "0")
 
-        let CINR = data.CI.filter(entry => entry.CINR !== '' && entry.CELLTYPE == '0')
+        let CINR = data.CI.filter(entry => entry.CINR !== '' && entry.CELLTYPE == '0').map((entry)=>{
+            return {CINR:parseFloat(entry.CINR), CELLTYPE: entry.CELLTYPE, LAT: entry.LAT, LON: entry.LON, CHANNEL: entry.EARFCN, TIME: entry.TIME, FILE: entry.file}
+        })
 
         if ('polygon' in opts) {
             RSRP_RSRQ = RSRP_RSRQ.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
             CINR = CINR.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: false }))
         }
 
-        CINR.forEach(entry => entry.CINR = parseFloat(entry.CINR))
         //console.log(RSRP_RSRQ.length,CINR.length)
         //console.timeEnd("nemo_cell_measurement")
         return { "RSRP_RSRQ" : RSRP_RSRQ, "SINR": CINR }
@@ -872,5 +900,23 @@ export class NemoParameterGrid {
         })
 
         return {"L3_MESSAGE":L3SM}
+    }
+
+    nemo_sip_message(data, opts:any){
+        if (!data.SIPSM) throw console.error('SIPSM is not decoded while parsing logfile. Consider update decoder field.');
+
+        //console.log(data.L3SM)
+        const SIPSM = data.SIPSM.map((entry)=>{
+            return {
+                FILE:entry.file,
+                TIME:entry.TIME,
+                ETIME:this.GetEpochTime(entry.TIME),
+                MESSAGE:entry.MESSAGE.replace(/"|\r|\n/g,""),
+                SYSTEM:entry.MEAS_SYSTEM,
+                DIRECTION:entry.SIP_DIR
+            }
+        })
+
+        return {"SIP_MESSAGE":SIPSM}
     }
 }

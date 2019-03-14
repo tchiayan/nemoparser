@@ -258,6 +258,7 @@ export class NemoParser {
                 case 'INTRA_HANDOVER':
                     if(!('HOA' in extraction)) extraction['HOA'] = DECODER.UE_HOA
                     if(!('HOS' in extraction)) extraction['HOS'] = DECODER.UE_HOS
+                    if(!('HOF' in extraction)) extraction['HOF'] = DECODER.UE_HOF
                     break;
 
                 case 'IRAT_HANDOVER':
@@ -318,6 +319,10 @@ export class NemoParser {
 
                 case 'L3_MESSAGE':
                     if(!('L3SM' in extraction)) extraction['L3SM'] = DECODER.UE_L3SM
+                    break;
+
+                case 'SIP_MESSAGE':
+                    if(!('SIPSM' in extraction)) extraction['SIPSM'] = DECODER.UE_SIPSM
                     break;
             }
         }
@@ -397,6 +402,9 @@ export class NemoParser {
                             case 'L3_MESSAGE':
                                 result[param] = new NemoParameterGrid().nemo_l3_message(data.result,option)
                                 break;
+                            case 'SIP_MESSAGE':
+                                result[param] = new NemoParameterGrid().nemo_sip_message(data.result,option)
+                                break;
                         }
                     }
                     observer.next({status:'OK',result:result})
@@ -417,21 +425,22 @@ export class NemoParser {
         
     }
 
-    public convertToFeaturesCollection(data:any[],ranges?:any[]){
-        let range = [{
-            color: 'red',
-            field: 'RSRP',
-            condition: {
-                eq: 0
-            }
-        }]
+    public convertToFeaturesCollection(data:any[],lineString:boolean=true,ranges?:any[]){
         const GeoJSONParser = new NemoGeoJSON()
         const FILES = Array.from(new Set(data.map(entry => entry.FILE)))
         const layers = FILES.map((file)=>{
-            return {
-                geojson: GeoJSONParser.convertToGeoJSON(data.filter(entry => entry.FILE === file),ranges),
-                file: file
+            if(lineString){
+                return {
+                    geojson: GeoJSONParser.convertToLineStringGeoJSON(data.filter(entry => entry.FILE === file),ranges),
+                    file: file
+                }
+            }else{
+                return {
+                    geojson: GeoJSONParser.convertToPointGeoJSON(data.filter(entry => entry.FILE === file)),
+                    file: file
+                }
             }
+            
         })
         return layers
     }

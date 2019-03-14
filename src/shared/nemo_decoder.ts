@@ -114,6 +114,11 @@ export const UE_HOS = {
   output: {'TIME':1,'HO_CONTEXT':3}
 }
 
+export const UE_HOF = {
+  filter: {0: 'HOF'},
+  output: {'TIME':1,'HO_CONTEXT':3}
+}
+
 export const UE_CAA = {
   filter: {0:'CAA'},
   output: {'TIME':1,'CALL_CONTEXT':3,'MEAS_SYSTEM':4,'CALL_TYPE':5}
@@ -185,4 +190,9 @@ export const UE_L3SM = {
 export const UE_RLC_BLER = {
   filter: {0:'RLCBLER'},
   output: {'TIME':1, 'BLER':4}
+}
+
+export const UE_SIPSM = {
+  filter: {0:'SIPSM'},
+  output: {'TIME':1,'MEAS_SYSTEM':3,'SIP_DIR':4,'MESSAGE':5}
 }

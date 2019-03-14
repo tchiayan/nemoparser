@@ -57,8 +57,39 @@ export class NemoGeoJSON {
         return range? range.color : null
     }
 
+    public convertToPointGeoJSON(data:any[]){
+        for(let i=0; i< data.length; i++){
+            const keys:string[] = Object.keys(data[i])
+            /*if(!keys.includes('TIME')){
+                console.warn(`Missing time information`)
+            }else{
+                data['ETIME'] = this.GetEpochTime(data[i])
+            }*/
+
+            if(!(keys.includes('LAT') && keys.includes('LON'))){
+                console.warn(`No lat lng info`)
+            }
+        }
+        //data.sort((a,b)=>a.ETIME - b.ETIME)
+        
+        let features:any[] = []
+        for(let i=0; i < data.length; i++){
+            features.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates:[data[i].LON, data[i].LAT]
+                }
+            })
+        }
+
+        return {
+            type:'FeatureCollection',
+            features:features
+        }
+    }
     
-    public convertToGeoJSON(data:any[],condition?){
+    public convertToLineStringGeoJSON(data:any[],condition?){
         for(let i=0; i< data.length; i++){
             const keys:string[] = Object.keys(data[i])
             if(!keys.includes('TIME')){

@@ -43,7 +43,7 @@ describe("CONVERT GEOJSON FEATURE",()=>{
                 let data = result['LTE_FDD_SCANNER_MEASUREMENT']
                 //console.log(`RSRP: ${data['SCANNER_RSRP'].length} | CINR: ${data['SCANNER_CINR'].length} | RSRQ: ${data['SCANNER_RSRQ'].length}`)
                 let JSONParser = new NemoGeoJSON()
-                const featuresCollection = JSONParser.convertToGeoJSON(data['SCANNER_RSRP'])
+                const featuresCollection = JSONParser.convertToLineStringGeoJSON(data['SCANNER_RSRP'])
                 const latlngLength = data['SCANNER_RSRP'].length
                 expect(featuresCollection).to.have.keys(['type','features'])
                 const features = featuresCollection.features
@@ -57,7 +57,7 @@ describe("CONVERT GEOJSON FEATURE",()=>{
         })
     })
 
-    it('ConvertToFeaturesCollection Function Testing',()=>{
+    it('ConvertToFeaturesCollection Function Testing | LineString',()=>{
         const directory = './server-test/logfiles/FDD_SCANNER';
         let bufferArray:LogfileBuffer[] = []
 
@@ -79,6 +79,28 @@ describe("CONVERT GEOJSON FEATURE",()=>{
         })
     })
 
+    it('ConvertToFeaturesCollection Function Testing | Point',()=>{
+        const directory = './server-test/logfiles/FDD_LTE_PSDL_HOFAIL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['INTRA_HANDOVER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)Point
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['INTRA_HANDOVER']
+                let layers = testClass.convertToFeaturesCollection(data['HO_FAIL'],false)
+                expect(layers).to.be.an('array').have.lengthOf(6)
+            }
+        })
+    })
+
     it('ConvertToFeaturesCollection Function Testing With ColorSet',()=>{
         const directory = './server-test/logfiles/FDD_SCANNER';
         let bufferArray:LogfileBuffer[] = []
@@ -95,7 +117,7 @@ describe("CONVERT GEOJSON FEATURE",()=>{
             if(res.status === "OK"){
                 let result = res.result
                 let data = result['LTE_FDD_SCANNER_MEASUREMENT']
-                let layers = testClass.convertToFeaturesCollection(data['SCANNER_RSRP'],[
+                let layers = testClass.convertToFeaturesCollection(data['SCANNER_RSRP'],true,[
                     {
                         color: 'green',
                         field: 'RSRP',
@@ -164,7 +186,7 @@ describe("CONVERT GEOJSON FEATURE",()=>{
             if(res.status === "OK"){
                 let result = res.result
                 let data = result['LTE_FDD_UE_MEASUREMENT']
-                let layers = testClass.convertToFeaturesCollection(data['RSRP_RSRQ'],[
+                let layers = testClass.convertToFeaturesCollection(data['RSRP_RSRQ'],true,[
                     {color:'green',field:'RSRP',condition:{gt:-80}},
                     {color:'yellow',field:'RSRP',condition:{lt:-80,gt:-108}},
                     {color:'red',field:'RSRP',condition:{lt:-108}}
@@ -226,7 +248,7 @@ describe("DEBUG FAIZ PSDL LONG",()=>{
                     let result = res.result
                     //console.log(res)
                     for(let i of Object.keys(result)){
-                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR','DL_TP_LOC'])
                         expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
                         expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf(0)
                     }
@@ -380,7 +402,7 @@ describe('UMTS FILE PARSING & KPI CHECK',() => {
             if(res.status === "OK"){
                 let result = res.result
                 let data = result['APPLICATION_THROUGHPUT_DOWNLINK']
-                expect(data).to.have.keys(['DL_TP']).not.have.key('DL_TP_SNR')
+                expect(data).to.have.keys(['DL_TP','DL_TP_LOC']).not.have.key('DL_TP_SNR')
                 expect(data['DL_TP']).to.be.an('array').have.lengthOf(359)
                 const DL_AVG = parseFloat((data['DL_TP'].reduce((acc,cur)=> {return acc + cur},0)/data['DL_TP'].length/1000).toFixed(3))
                 expect(DL_AVG).to.be.eq(5608.891)
@@ -557,7 +579,7 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
             if(res.status === "OK"){
                 let result = res.result
                 let data = result['APPLICATION_THROUGHPUT_DOWNLINK']
-                expect(data).to.have.keys(['DL_TP']).not.have.key('DL_TP_SNR')
+                expect(data).to.have.keys(['DL_TP','DL_TP_LOC']).not.have.key('DL_TP_SNR')
                 expect(data['DL_TP']).to.be.an('array').have.lengthOf(432)
                 const DL_AVG = parseFloat((data['DL_TP'].reduce((acc,cur)=> {return acc + cur},0)/data['DL_TP'].length/1000).toFixed(3))
                 expect(DL_AVG).to.be.eq(3334.345)
@@ -625,9 +647,34 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
             if(res.status === "OK"){
                 let result = res.result
                 for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT','HO_ATTEMPT','HO_FAIL','HO_SUCCESS'])
                     expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').eq(9)
                     expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').eq(9)
+                }
+            }
+        })
+    })
+
+    it('LOAD FDD PSDL FILE | INTRA_HANDOVER -> HO Fail Test',()=>{
+        const directory = './server-test/logfiles/FDD_LTE_PSDL_HOFAIL';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['INTRA_HANDOVER'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            //console.log(result)
+            if(res.status === "OK"){
+                let result = res.result
+                for(let i of Object.keys(result)){
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT','HO_ATTEMPT','HO_FAIL','HO_SUCCESS'])
+                    expect(result[i]['HO_ATTEMPT']).to.be.an('array').have.lengthOf(23)
+                    expect(result[i]['HO_FAIL']).to.be.an('array').have.lengthOf(13)
+                    expect(result[i]['HO_SUCCESS']).to.be.an('array').have.lengthOf(10)
                 }
             }
         })
@@ -749,6 +796,27 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
                 expect(data['VOLTE_CALL_ATTEMPT']).to.be.an('array').have.lengthOf(10)
                 expect(data['VOLTE_CALL_CONNECTED']).to.be.an('array').have.lengthOf(10)
                 expect(data['VOLTE_CALL_DROP']).to.be.an('array').have.lengthOf(0)
+            }
+        })
+    })
+
+    it('LOAD FDD VOLTE FILE | SIP_MESSAGE',()=>{
+        const directory = './server-test/logfiles/FDD_VOLTE_MOC';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+        testClass.displayGrid(['SIP_MESSAGE'],{fileBuffer:bufferArray}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['SIP_MESSAGE']
+                expect(data).to.have.keys(['SIP_MESSAGE'])
+                expect(data['SIP_MESSAGE']).to.be.an('array').have.lengthOf(70)
             }
         })
     })
@@ -941,7 +1009,7 @@ describe('LTE TDD FILE PARSING & KPI CHECK',() => {
             if(res.status === "OK"){
                 let result = res.result
                 for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                    expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR','DL_TP_LOC'])
                     expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
                     expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
                 }
@@ -966,7 +1034,7 @@ describe('LTE TDD FILE PARSING & KPI CHECK',() => {
                     let result = res.result
                     //console.log(res)
                     for(let i of Object.keys(result)){
-                        expect(result[i]).to.have.keys(['DL_TP']).not.have.key('DL_TP_SNR')
+                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_LOC']).not.have.key('DL_TP_SNR')
                         expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
                         
                     }
@@ -1037,7 +1105,7 @@ describe('LTE TDD FILE PARSING & KPI CHECK',() => {
             if(res.status === "OK"){
                 let result = res.result
                 for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT','HO_ATTEMPT','HO_FAIL','HO_SUCCESS'])
                     expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
                     expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
                 }
@@ -1348,7 +1416,7 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
                         //expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
                         //expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
                         //expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
-                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR'])
+                        expect(result[i]).to.have.keys(['DL_TP','DL_TP_SNR','DL_TP_LOC'])
                         expect(result[i]['DL_TP']).to.be.an('array').have.lengthOf.greaterThan(0)
                         expect(result[i]['DL_TP_SNR']).to.be.an('array').have.lengthOf.greaterThan(0)
                         //console.log(result[i]['DL_TP'][0])
@@ -1427,7 +1495,7 @@ describe('PREDICTION FILTER CALCULATION TEST',()=>{
             if(res.status === "OK"){
                 let result = res.result
                 for(let i of Object.keys(result)){
-                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT'])
+                    expect(result[i]).to.have.keys(['HANDOVER_SUCCESS','HANDOVER_ATTEMPT','HO_ATTEMPT','HO_FAIL','HO_SUCCESS'])
                     expect(result[i]['HANDOVER_SUCCESS']).to.be.an('number').greaterThan(0)
                     expect(result[i]['HANDOVER_ATTEMPT']).to.be.an('number').greaterThan(0)
                 }

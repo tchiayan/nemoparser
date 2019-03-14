@@ -240,6 +240,15 @@ export declare const UE_HOS: {
         'HO_CONTEXT': number;
     };
 };
+export declare const UE_HOF: {
+    filter: {
+        0: string;
+    };
+    output: {
+        'TIME': number;
+        'HO_CONTEXT': number;
+    };
+};
 export declare const UE_CAA: {
     filter: {
         0: string;
@@ -401,5 +410,16 @@ export declare const UE_RLC_BLER: {
     output: {
         'TIME': number;
         'BLER': number;
+    };
+};
+export declare const UE_SIPSM: {
+    filter: {
+        0: string;
+    };
+    output: {
+        'TIME': number;
+        'MEAS_SYSTEM': number;
+        'SIP_DIR': number;
+        'MESSAGE': number;
     };
 };
