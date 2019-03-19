@@ -1,7 +1,7 @@
 export declare class NemoParameterGrid {
     constructor();
-    private nemo_scanner_field_n_best;
-    private GetEpochTime;
+    private nemo_scanner_field_n_best(data, field);
+    private GetEpochTime(timeString);
     nemo_lte_scanner_measurement(data: any, opts: any): {
         'SCANNER_RSRP': {
             RSRP: number;
@@ -94,6 +94,9 @@ export declare class NemoParameterGrid {
     };
     nemo_l3_message(data: any, opts: any): {
         "L3_MESSAGE": any;
+    };
+    nemo_rrc_message(data: any, opts: any): {
+        "RRC_MESSAGE": any;
     };
     nemo_sip_message(data: any, opts: any): {
         "SIP_MESSAGE": any;

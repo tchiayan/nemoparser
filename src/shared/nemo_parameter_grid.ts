@@ -902,6 +902,23 @@ export class NemoParameterGrid {
         return {"L3_MESSAGE":L3SM}
     }
 
+    nemo_rrc_message(data, opts:any){
+        if (!data.RRCSM) throw console.error('RRCSM is not decoded while parsing logfile. Consider update decoder field.');
+
+        //console.log(data.L3SM)
+        const RRCSM = data.RRCSM.map((entry)=>{
+            return {
+                FILE:entry.file,
+                TIME:entry.TIME,
+                ETIME:this.GetEpochTime(entry.TIME),
+                MESSAGE:entry.MESSAGE.replace(/"|\r|\n/g,""),
+                SYSTEM:entry.MEAS_SYSTEM
+            }
+        })
+
+        return {"RRC_MESSAGE":RRCSM}
+    }
+
     nemo_sip_message(data, opts:any){
         if (!data.SIPSM) throw console.error('SIPSM is not decoded while parsing logfile. Consider update decoder field.');
 

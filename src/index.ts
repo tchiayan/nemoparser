@@ -324,6 +324,10 @@ export class NemoParser {
                 case 'SIP_MESSAGE':
                     if(!('SIPSM' in extraction)) extraction['SIPSM'] = DECODER.UE_SIPSM
                     break;
+
+                case 'RRC_MESSAGE':
+                    if(!('RRCSM' in extraction)) extraction['RRCSM'] = DECODER.UE_RRCSM
+                    break;
             }
         }
         
@@ -402,9 +406,15 @@ export class NemoParser {
                             case 'L3_MESSAGE':
                                 result[param] = new NemoParameterGrid().nemo_l3_message(data.result,option)
                                 break;
+                            case 'RRC_MESSAGE':
+                                result[param] = new NemoParameterGrid().nemo_rrc_message(data.result,option)
+                                break;
                             case 'SIP_MESSAGE':
                                 result[param] = new NemoParameterGrid().nemo_sip_message(data.result,option)
                                 break;
+
+                            default:
+                                console.warn(`No parameter found: ${param}`)
                         }
                     }
                     observer.next({status:'OK',result:result})

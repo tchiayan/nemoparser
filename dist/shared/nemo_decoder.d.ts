@@ -403,6 +403,16 @@ export declare const UE_L3SM: {
         'MESSAGE': number;
     };
 };
+export declare const UE_RRCSM: {
+    filter: {
+        0: string;
+    };
+    output: {
+        'TIME': number;
+        'MEAS_SYSTEM': number;
+        'MESSAGE': number;
+    };
+};
 export declare const UE_RLC_BLER: {
     filter: {
         0: string;

@@ -9,9 +9,9 @@
     "test": "mocha -r ts-node/register src/index.spec.ts -t 60000",
     "test-decompress": "mocha -r ts-node/register src/shared/unzip.spec.ts -t 60000",
     "test-server": "node server-test/server.js",
-    "build": "tsc",
+    "build": "webpack --config webpack.config.js",
     "git-update": "git add -A && git commit -m \"Version Update\" && git push origin master",
-    "npm-update": "tsc && git add -A && git commit -m \"Version Update\" && git push origin master && npm version patch && npm publish"
+    "npm-update": "git add -A && git commit -m \"Version Update\" && git push origin master && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
@@ -43,7 +43,10 @@
     "chai": "^4.2.0",
     "jsdom": "^13.2.0",
     "mocha": "^5.2.0",
+    "ts-loader": "^5.3.3",
     "ts-node": "^7.0.1",
-    "typescript": "^3.1.6"
+    "typescript": "^3.3.3333",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
   }
 }

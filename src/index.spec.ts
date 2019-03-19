@@ -436,6 +436,20 @@ describe('UMTS FILE PARSING & KPI CHECK',() => {
             }
         })
     })
+
+    it('LOAD UMTS FDD_CSFB_MOC | RRC_MESSAGE',()=>{
+        const testClass = new NemoParser();
+        testClass.displayGrid(['RRC_MESSAGE'],{fileBuffer:parseDirectoryLogfile('./server-test/logfiles/FDD_CSFB_MTC')}).subscribe((res)=>{
+            if(res.status === "OK"){
+                let result = res.result
+                let data = result['RRC_MESSAGE']
+                expect(data).to.have.keys(['RRC_MESSAGE'])
+                //console.log(data)
+                expect(data['RRC_MESSAGE']).to.be.an('array').have.lengthOf(2628)
+                console.log(data['RRC_MESSAGE'][0])
+            }
+        })
+    })
 })
 
 
@@ -583,11 +597,11 @@ describe('LTE FDD FILE PARSING & KPI CHECK',() => {
                 expect(data['DL_TP']).to.be.an('array').have.lengthOf(432)
                 const DL_AVG = parseFloat((data['DL_TP'].reduce((acc,cur)=> {return acc + cur},0)/data['DL_TP'].length/1000).toFixed(3))
                 expect(DL_AVG).to.be.eq(3334.345)
-                //console.log(data['DL_TP_LOC'][0])
             }
         })
     })
 
+    
     it('LOAD FDD PSDL FILE | ATTACH_ATTEMPT',()=>{
         const directory = './server-test/logfiles/FDD_LTE_PSDL';
         let bufferArray:LogfileBuffer[] = []

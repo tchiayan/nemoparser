@@ -10,9 +10,9 @@ export declare class LogfileBuffer {
 export declare class NemoParser {
     nemoParamGrid: NemoParameterGrid;
     constructor();
-    private getInfo;
-    private parseLogfile;
-    private parseBuffer;
+    private getInfo(cols, format, extras?, skip_null?);
+    private parseLogfile(files, extraction);
+    private parseBuffer(buffers, extraction);
     displayGrid(nemo_params: string[], option: {
         nemo_opts?: any;
         fileBuffer?: LogfileBuffer[];

@@ -158,6 +158,10 @@ exports.UE_L3SM = {
     filter: { 0: 'L3SM' },
     output: { 'TIME': 1, 'MEAS_SYSTEM': 3, 'MESSAGE': 5 }
 };
+exports.UE_RRCSM = {
+    filter: { 0: 'RRCSM' },
+    output: { 'TIME': 1, 'MEAS_SYSTEM': 3, 'MESSAGE': 5 }
+};
 exports.UE_RLC_BLER = {
     filter: { 0: 'RLCBLER' },
     output: { 'TIME': 1, 'BLER': 4 }
