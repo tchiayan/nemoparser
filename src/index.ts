@@ -206,7 +206,7 @@ export class NemoParser {
     public displayGrid(nemo_params:string[],option:{nemo_opts?:any,fileBuffer?:LogfileBuffer[],files?:FileList}):Observable<any>{
         let extraction = {}
         let function_call:any[] = []
-        
+        console.log(nemo_params)
         for(let param of nemo_params){
             switch(param){
                 case 'LTE_FDD_SCANNER_MEASUREMENT':
@@ -408,8 +408,6 @@ export class NemoParser {
                                 break;
                             case 'RRC_MESSAGE':
                                 result[param] = new NemoParameterGrid().nemo_rrc_message(data.result,option)
-                                console.log("running rrc message")
-                                console.log(result[param])
                                 break;
                             case 'SIP_MESSAGE':
                                 result[param] = new NemoParameterGrid().nemo_sip_message(data.result,option)
