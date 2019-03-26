@@ -448,6 +448,8 @@ var NemoParser = /** @class */ (function () {
                                 break;
                             case 'RRC_MESSAGE':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_rrc_message(data.result, option);
+                                console.log("running rrc message");
+                                console.log(result[param]);
                                 break;
                             case 'SIP_MESSAGE':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_sip_message(data.result, option);
