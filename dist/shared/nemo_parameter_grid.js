@@ -13,7 +13,7 @@ var turf = require("@turf/turf");
 var NemoParameterGrid = /** @class */ (function () {
     function NemoParameterGrid() {
     }
-    NemoParameterGrid.prototype.nemo_scanner_field_n_best = function (data, field) {
+    NemoParameterGrid.prototype.nemo_scanner_field_n_best = function (data, field, cellIdentity) {
         var rfield = data.map(function (entry, index, array) {
             //let empty_field = {}
             //empty_field[field] = ''
@@ -22,32 +22,12 @@ var NemoParameterGrid = /** @class */ (function () {
             if (entry.loop.length !== 0) {
                 var top_list = entry.loop.filter(function (meas) { return meas[field] !== ''; });
                 if (top_list.length !== 0) {
-                    var top_meas = top_list.map(function (meas) {
-                        var temp = {};
-                        temp[field] = parseFloat(meas[field]);
-                        return temp;
-                    }).sort(function (a, b) { return b[field] - a[field]; })[0];
-                    top_field[field] = top_meas[field];
-                }
-            }
-            else {
-                /*if(index - CH_COUNT >= 0){
-                    if(array[index-CH_COUNT].loop.length !== 0){
-                        let top_list = array[index-CH_COUNT].loop.filter((meas)=>meas[field] !== '')
-                        if(top_list.length !==0){
-                            let top_meas = top_list.map((meas)=>{
-                                let temp = {}
-                                temp[field] = parseFloat(meas[field])
-                                return temp
-                            }).sort((a,b)=>b[field] - a[field])[0]
-                            top_field[field] = top_meas[field]
-                        }
-                    }else{
-                        console.log(`Empty loop: ${entry.EARFCN} FILE: ${entry.file}`)
+                    var top_meas = top_list.sort(function (a, b) { return parseFloat(b[field]) - a[field]; })[0];
+                    top_field[field] = parseFloat(top_meas[field]);
+                    if (cellIdentity) {
+                        top_field[cellIdentity] = top_meas[cellIdentity];
                     }
-                }else{
-                    console.log(`No early loop: ${entry.EARFCN} FILE: ${entry.file}`)
-                }*/
+                }
             }
             return __assign({}, top_field, { TIME: entry.TIME, CH: entry.EARFCN, FILE: entry.file, LAT: entry.LAT, LON: entry.LON });
         });
@@ -138,9 +118,9 @@ var NemoParameterGrid = /** @class */ (function () {
             var filter_data = data.OFDMSCAN.filter(function (entry) { return entry.file == file; });
             /* filter channel */
             filter_data = ('filter_channel' in opts) ? filter_data.filter(function (entry) { return opts.filter_channel.includes(entry.EARFCN); }) : filter_data;
-            RSRP = RSRP.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRP'));
-            CINR = CINR.concat(this_1.nemo_scanner_field_n_best(filter_data, 'CINR'));
-            RSRQ = RSRQ.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRQ'));
+            RSRP = RSRP.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRP', 'PCI'));
+            CINR = CINR.concat(this_1.nemo_scanner_field_n_best(filter_data, 'CINR', 'PCI'));
+            RSRQ = RSRQ.concat(this_1.nemo_scanner_field_n_best(filter_data, 'RSRQ', 'PCI'));
         };
         var this_1 = this;
         for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {

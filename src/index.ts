@@ -56,15 +56,24 @@ export class NemoParser {
                     let n, p, s, c
                     if (typeof format.output[f]['n'] == 'object') {
                         // s = starting, p = seperationg,  n = number 
-                        let st = format.output[f]['n']['s']
+                        const oc = format.output[f]['n']['oc']?parseInt(cols[format.output[f]['n']['oc']]):0
+                        let st = format.output[f]['n']['s'] + oc
                         let nu = parseInt(cols[format.output[f]['n']['n']])
                         let sp = parseInt(cols[format.output[f]['n']['p']])
                         s = st + nu * sp + 2
                         n = parseInt(cols[st + nu * sp])
                         //console.log(st,nu,sp)
                     } else {
-                        n = parseInt(cols[format.output[f]['n']])
-                        s = format.output[f]['s']
+                        
+                        if(format.output[f]['oc']){
+                            const oc = parseInt(cols[format.output[f]['oc']])
+                            s = format.output[f]['s'] + oc + 2
+                            n = parseInt(cols[format.output[f]['n'] + oc])
+                        }else{
+                            n = parseInt(cols[format.output[f]['n']])
+                            s = format.output[f]['s']
+                        }
+                        
                     }
                     p = format.output[f]['p']
                     c = format.output[f]['c']
@@ -88,7 +97,6 @@ export class NemoParser {
                                 continue
                             }
                         }
-
                         output['loop'].push(subfield)
                     }
                 }
@@ -206,7 +214,6 @@ export class NemoParser {
     public displayGrid(nemo_params:string[],option:{nemo_opts?:any,fileBuffer?:LogfileBuffer[],files?:FileList}):Observable<any>{
         let extraction = {}
         let function_call:any[] = []
-        console.log(nemo_params)
         for(let param of nemo_params){
             switch(param){
                 case 'LTE_FDD_SCANNER_MEASUREMENT':

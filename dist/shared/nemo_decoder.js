@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LTE_FDD_SCANNER = {
     filter: { 0: 'OFDMSCAN', 3: '7', 6: '1' },
-    output: { 'SYSTEM': 'LTE', 'DEVICE': 'SCANNER', 'TIME': 1, 'EARFCN': 5, loop: { n: 10, p: 10, s: 12, c: {
+    output: { 'SYSTEM': 'LTE', 'DEVICE': 'SCANNER', 'TIME': 1, 'EARFCN': 5, loop: { n: 5, p: 10, s: 5, oc: 4, c: {
                 'PCI': 0,
                 'RSRP': 3,
                 'CINR': 5,
@@ -10,8 +10,8 @@ exports.LTE_FDD_SCANNER = {
             } } }
 };
 exports.LTE_TDD_SCANNER = {
-    filter: { 0: 'OFDMSCAN', 3: '8', 6: '1', 10: { condition: '>0' } },
-    output: { 'SYSTEM': 'LTE', 'DEVICE': 'SCANNER', 'TIME': 1, 'EARFCN': 5, loop: { n: 10, p: 12, s: 12, c: {
+    filter: { 0: 'OFDMSCAN', 3: '8', 6: '1' },
+    output: { 'SYSTEM': 'LTE', 'DEVICE': 'SCANNER', 'TIME': 1, 'EARFCN': 5, loop: { n: 5, p: 12, s: 5, oc: 4, c: {
                 'PCI': 0,
                 'RSRP': 3,
                 'CINR': 5,

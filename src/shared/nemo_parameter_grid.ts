@@ -4,7 +4,7 @@ import * as turf from '@turf/turf'
 export class NemoParameterGrid {
     constructor(){}
 
-    private nemo_scanner_field_n_best(data,field:string):any[]{
+    private nemo_scanner_field_n_best(data,field:string,cellIdentity?:string):any[]{
         
         let rfield = data.map((entry,index,array)=>{
             //let empty_field = {}
@@ -15,31 +15,10 @@ export class NemoParameterGrid {
             if(entry.loop.length!==0){
                 let top_list = entry.loop.filter((meas)=>meas[field] !== '')
                 if(top_list.length !==0){
-                    let top_meas = top_list.map((meas)=>{
-                        let temp = {}
-                        temp[field] = parseFloat(meas[field])
-                        return temp
-                    }).sort((a,b)=>b[field] - a[field])[0]
-                    top_field[field] = top_meas[field]
+                    let top_meas = top_list.sort((a,b)=>parseFloat(b[field])-a[field])[0]
+                    top_field[field] = parseFloat(top_meas[field])
+                    if(cellIdentity){ top_field[cellIdentity] = top_meas[cellIdentity]}
                 }
-            }else{
-                /*if(index - CH_COUNT >= 0){
-                    if(array[index-CH_COUNT].loop.length !== 0){
-                        let top_list = array[index-CH_COUNT].loop.filter((meas)=>meas[field] !== '')
-                        if(top_list.length !==0){
-                            let top_meas = top_list.map((meas)=>{
-                                let temp = {}
-                                temp[field] = parseFloat(meas[field])
-                                return temp
-                            }).sort((a,b)=>b[field] - a[field])[0]
-                            top_field[field] = top_meas[field]
-                        }
-                    }else{
-                        console.log(`Empty loop: ${entry.EARFCN} FILE: ${entry.file}`)
-                    }
-                }else{
-                    console.log(`No early loop: ${entry.EARFCN} FILE: ${entry.file}`)
-                }*/
             }
             return {...top_field,
                 TIME:entry.TIME,CH:entry.EARFCN,FILE:entry.file,LAT:entry.LAT,LON:entry.LON}
@@ -121,7 +100,6 @@ export class NemoParameterGrid {
         if (!data.OFDMSCAN) throw console.error('OFDMSCAN is not decoded while parsing logfile. Consider update decoder field.');
         
         let OFDMSCAN = data.OFDMSCAN
-        
         let files = Array.from(new Set(OFDMSCAN.map(entry => entry.file)))
         let RSRP:{RSRP:number,TIME:string,CH:string,FILE:string,LAT:number,LON:number,duplicate:boolean}[] = []
         let CINR:{CINR:number,TIME:string,CH:string,FILE:string,LAT:number,LON:number,duplicate:boolean}[] = []
@@ -132,9 +110,9 @@ export class NemoParameterGrid {
             /* filter channel */
             filter_data = ('filter_channel' in opts)? filter_data.filter((entry)=>opts.filter_channel.includes(entry.EARFCN)) : filter_data
 
-            RSRP = [...RSRP,...this.nemo_scanner_field_n_best(filter_data,'RSRP')]
-            CINR = [...CINR,...this.nemo_scanner_field_n_best(filter_data,'CINR')]
-            RSRQ = [...RSRQ,...this.nemo_scanner_field_n_best(filter_data,'RSRQ')]
+            RSRP = [...RSRP,...this.nemo_scanner_field_n_best(filter_data,'RSRP','PCI')]
+            CINR = [...CINR,...this.nemo_scanner_field_n_best(filter_data,'CINR','PCI')]
+            RSRQ = [...RSRQ,...this.nemo_scanner_field_n_best(filter_data,'RSRQ','PCI')]
         }
 
         RSRP = ('polygon' in opts)?RSRP.filter(entry => turf.booleanPointInPolygon(turf.point([entry.LON, entry.LAT]), opts.polygon, { ignoreBoundary: true })):RSRP

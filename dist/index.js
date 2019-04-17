@@ -60,7 +60,8 @@ var NemoParser = /** @class */ (function () {
                     var n = void 0, p_1, s_1, c_1;
                     if (typeof format.output[f]['n'] == 'object') {
                         // s = starting, p = seperationg,  n = number 
-                        var st = format.output[f]['n']['s'];
+                        var oc = format.output[f]['n']['oc'] ? parseInt(cols[format.output[f]['n']['oc']]) : 0;
+                        var st = format.output[f]['n']['s'] + oc;
                         var nu = parseInt(cols[format.output[f]['n']['n']]);
                         var sp = parseInt(cols[format.output[f]['n']['p']]);
                         s_1 = st + nu * sp + 2;
@@ -68,8 +69,15 @@ var NemoParser = /** @class */ (function () {
                         //console.log(st,nu,sp)
                     }
                     else {
-                        n = parseInt(cols[format.output[f]['n']]);
-                        s_1 = format.output[f]['s'];
+                        if (format.output[f]['oc']) {
+                            var oc = parseInt(cols[format.output[f]['oc']]);
+                            s_1 = format.output[f]['s'] + oc + 2;
+                            n = parseInt(cols[format.output[f]['n'] + oc]);
+                        }
+                        else {
+                            n = parseInt(cols[format.output[f]['n']]);
+                            s_1 = format.output[f]['s'];
+                        }
                     }
                     p_1 = format.output[f]['p'];
                     c_1 = format.output[f]['c'];
@@ -448,8 +456,6 @@ var NemoParser = /** @class */ (function () {
                                 break;
                             case 'RRC_MESSAGE':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_rrc_message(data.result, option);
-                                console.log("running rrc message");
-                                console.log(result[param]);
                                 break;
                             case 'SIP_MESSAGE':
                                 result[param] = new nemo_parameter_grid_1.NemoParameterGrid().nemo_sip_message(data.result, option);

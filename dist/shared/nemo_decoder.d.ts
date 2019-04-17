@@ -13,6 +13,7 @@ export declare const LTE_FDD_SCANNER: {
             n: number;
             p: number;
             s: number;
+            oc: number;
             c: {
                 'PCI': number;
                 'RSRP': number;
@@ -27,9 +28,6 @@ export declare const LTE_TDD_SCANNER: {
         0: string;
         3: string;
         6: string;
-        10: {
-            condition: string;
-        };
     };
     output: {
         'SYSTEM': string;
@@ -40,6 +38,7 @@ export declare const LTE_TDD_SCANNER: {
             n: number;
             p: number;
             s: number;
+            oc: number;
             c: {
                 'PCI': number;
                 'RSRP': number;

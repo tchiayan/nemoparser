@@ -446,7 +446,7 @@ describe('UMTS FILE PARSING & KPI CHECK',() => {
                 expect(data).to.have.keys(['RRC_MESSAGE'])
                 //console.log(data)
                 expect(data['RRC_MESSAGE']).to.be.an('array').have.lengthOf(2628)
-                console.log(data['RRC_MESSAGE'][0])
+                //console.log(data['RRC_MESSAGE'][0])
             }
         })
     })
@@ -980,6 +980,31 @@ describe('LTE TDD FILE PARSING & KPI CHECK',() => {
                         expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf.gt(0)
                         expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf.gt(0)
                         expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf.gt(0)
+                    }
+                }
+                
+            })
+    })
+
+    it('LOAD TDD SCANNER FILE (FAIZ LOGFILE) | LTE_TDD_SCANNER_MEASUREMENT',()=>{
+        const directory = './server-test/logfiles/TDD_SCANNER_LOGFILE_3_FAIZ_BUG';
+        let bufferArray:LogfileBuffer[] = []
+
+        readdirSync(directory).forEach(file =>{
+            const fileBuffer = readFileSync(`${directory}/${file}`,{encoding:'utf-8'})
+            const logfileBuffer:LogfileBuffer = new LogfileBuffer(fileBuffer,file)
+            bufferArray.push(logfileBuffer)
+        })
+
+        const testClass = new NemoParser();
+            testClass.displayGrid(['LTE_TDD_SCANNER_MEASUREMENT'],{fileBuffer:bufferArray}).subscribe((res)=>{
+                //console.log(result)
+                if(res.status === "OK"){
+                    let result = res.result
+                    for(let i of Object.keys(result)){
+                        expect(result[i]['SCANNER_RSRP']).to.be.an('array').lengthOf(24373)
+                        expect(result[i]['SCANNER_CINR']).to.be.an('array').lengthOf(24373)
+                        expect(result[i]['SCANNER_RSRQ']).to.be.an('array').lengthOf(24373)
                     }
                 }
                 
